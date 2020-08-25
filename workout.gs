@@ -11,6 +11,7 @@ function getRecentFollowingWorkouts(ride_id, page, limit){
     page: result.page,
     page_count: result.page_count,
     limit: result.limit,
+    count: result.count,
     total: result.total,
     sort_by: result.sort_by,
     show_next: result.show_next,
@@ -37,11 +38,12 @@ function getRecentFollowingWorkouts(ride_id, page, limit){
              });
   
   console.log(page);
-console.log("Returning page "+ (page.page+1) +" out of "+page.page_count+" pages, containing "+page.limit+" records out of the total "+page.total);
+console.log("Returning page "+ (page.page+1) +" out of "+page.page_count+" pages, containing "+page.workouts.length+"( limit = "+page.limit+") records out of the total "+page.total);
   return page;
 }
 
 function getRecentFollowingWorkoutsForClass(ride_id, days_ago){
+  var cfg=getConfigDetails();
   var all_workouts={};
   var done=false;
   var page=0;
@@ -53,6 +55,10 @@ function getRecentFollowingWorkoutsForClass(ride_id, days_ago){
     results.workouts.map(workout => {
                          var user=workout.user_id;
                          if(!all_workouts[user] || all_workouts[user].start_time.getTime() < workout.start_time.getTime()){
+      if(workout.output == 0 && cfg.peloton.ignore_zero_output){
+        console.log("Ignoring workout with Zero Output. (Presumably app) by "+workout.username+" from "+workout.start_time);
+        return;
+      }
       if(workout.start_time.getTime()> cutoff){
                 console.log("Adding eligible ride by "+workout.username+" from "+workout.start_time);
                                all_workouts[user]=workout;
