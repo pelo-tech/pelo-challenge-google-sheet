@@ -138,6 +138,7 @@ function loadAllWorkoutsForRide(ride_id){
   });
   
     sheet.getRange(lastRow+1, 1, workouts.length, rows[0].length).setValues(rows);
+    console.log("Just inserted "+rows.length+" new workouts");  
    return workouts;
 }
 
