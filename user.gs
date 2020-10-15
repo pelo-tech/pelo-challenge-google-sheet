@@ -20,7 +20,9 @@ function getUserProfile(username) {
     followers:data.total_followers,
     following:data.total_following,
     private:data.is_profile_private,
-    rides: data.total_pedaling_metric_workouts
+    rides: data.total_pedaling_metric_workouts,
+    following_user: (data.relationship  && data.relationship.user_to_me =='following'),
+    user_following_me: ( data.relationship  &&  data.relationship.me_to_user =='following')
   };
   console.log(profile);
   return profile;

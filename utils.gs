@@ -42,17 +42,18 @@ function getConfigDetails(){
    var user_id=cfg.getRange(USER_ID_CELL).getValue(); 
    var tz=cfg.getRange(TIME_ZONE_CELL).getValue();
    var eligible_ride_age=cfg.getRange(ELIGIBLE_RIDE_AGE_CELL).getValue();
-   var ignore_zero_output=cfg.getRange(IGNORE_ZERO_OUTPUT_CELL).getValue();
-   ignore_zero_output == (ignore_zero_output !=null && ignore_zero_output.toLowerCase()=='true');
   
-  return {
+  return { 
+    "email":{
+      "to": cfg.getRange(EMAIL_TO_CELL).getValue(),
+      "cc": cfg.getRange(EMAIL_CC_CELL).getValue()
+    },
     "peloton":{
       "http_base":PELOTON_API_BASE,
       "session_id":session_id, 
       "user_id":user_id,
       "timezone":tz,
       "eligible_ride_age":eligible_ride_age,
-      "ignore_zero_output": ignore_zero_output,
       "http_options":
       {
         'headers':
