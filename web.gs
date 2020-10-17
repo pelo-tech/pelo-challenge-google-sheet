@@ -5,7 +5,11 @@ function onFormSubmit(event){
   var message="";
   var username=event.namedValues["Leaderboard Name"][0];
   var profile=null;
-  
+  if(username!=null){
+     Logger.log("Scrubbing username:"+username);
+     username=username.replace(/[^A-Za-z0-9_]/gi, "");
+     Logger.log("Scrubbed username:"+username);
+     }
   // Retrieve User Profile
   try{
       profile=getUserProfile(username);
@@ -14,7 +18,7 @@ function onFormSubmit(event){
       
       // Check if Following the user, otherwise Follow
       if(profile.following_user){
-        message+=" (Already Following this user)"
+        message+=" (Already Following this user)";
         status="Already Following";
       } else {
         // Try Following
