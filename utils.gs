@@ -4,22 +4,32 @@ function setup(){
   var password=promptForText("Enter Peloton Password");
   if (password==null) return;
   
-    var sheet = SpreadsheetApp.getActive().getSheetByName('Config');
+  var data=processLogin(username,password);
+
+  ui.alert("Your session ID has been set to "+data.session_id+"\n Your User ID set to "+data.user_id);
+
+}
+
+function processLogin(username, password){
+      var sheet = SpreadsheetApp.getActive().getSheetByName(CONFIG_SHEET_NAME);
 
     var ui = SpreadsheetApp.getUi(); // Same variations.
-  var auth={
+    var auth={
     "username_or_email": username,
     "password": password
-  };
+    };
   
-  var response=UrlFetchApp.fetch(getConfigDetails().peloton.http_base+"/auth/login",{'method':'POST','contentType': 'application/json', 'payload':JSON.stringify(auth)});
+  var response=UrlFetchApp.fetch(
+     getConfigDetails().peloton.http_base+"/auth/login",
+     {'method':'POST','contentType': 'application/json', 'payload':JSON.stringify(auth)}
+   );
                                 
   var json = response.getContentText();
   var data = JSON.parse(json);
-  ui.alert("Your session ID has been set to "+data.session_id+"\n Your User ID set to "+data.user_id);
   sheet.getRange(SESSION_ID_CELL).setValue(data.session_id); 
   sheet.getRange(USER_ID_CELL).setValue(data.user_id); 
   sheet.getRange(USERNAME_CELL).setValue(username); 
+  return data;
 }
 
 function promptForText(msg) {
@@ -49,6 +59,7 @@ function getConfigDetails(){
       "cc": cfg.getRange(EMAIL_CC_CELL).getValue()
     },
     "peloton":{
+      "distance_units":cfg.getRange(DISTANCE_UNIT_CELL).getValue(),
       "http_base":PELOTON_API_BASE,
       "session_id":session_id, 
       "user_id":user_id,
