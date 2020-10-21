@@ -42,6 +42,7 @@ console.log("Returning page "+ (page.page+1) +" out of "+page.page_count+" pages
 }
 
 function getRecentFollowingWorkoutsForClass(ride_id, days_ago){
+var event=eventStart("Get Following Workouts",ride_id +", max "+days_ago+"d ago");
   var all_workouts={};
   var done=false;
   var page=0;
@@ -70,6 +71,7 @@ function getRecentFollowingWorkoutsForClass(ride_id, days_ago){
   }
 
  var arr=Object.values(all_workouts);
+ eventEnd(event,arr.length);
 return arr;
 }
 
@@ -89,6 +91,7 @@ function testLoadAllWorkoutsForRide(){
 }
 
 function purgeWorkouts(ride_id){
+var event=eventStart("PurgeWorkouts",ride_id);
   var sheet=SpreadsheetApp.getActiveSpreadsheet().getSheetByName(RESULTS_SHEET_NAME);
   var rows = sheet.getDataRange().getValues();
   var ride_id_column=9; // array index, not column number which would be 10
@@ -98,11 +101,14 @@ function purgeWorkouts(ride_id){
   }
   // reverse sort, to delete from bottom up
   rows_to_delete.sort(function(a, b){return b-a});
-  rows_to_delete.forEach(function(val){sheet.deleteRow(val);});
+  rows_to_delete.forEach(function(val){ sheet.deleteRow(val);});
   console.log("Deleted "+rows_to_delete.length+" rows");
+  eventEnd(event, rows_to_delete.length);
 }
 
 function loadAllWorkoutsForRide(ride_id){
+var event=eventStart("Load All Workouts",ride_id);
+
   var ride=getRide(ride_id);
   var days=getConfigDetails().peloton.eligible_ride_age;
   var workouts=getRecentFollowingWorkoutsForClass(ride_id, days);
@@ -112,7 +118,8 @@ function loadAllWorkoutsForRide(ride_id){
   var sheet=SpreadsheetApp.getActiveSpreadsheet().getSheetByName(RESULTS_SHEET_NAME);
   var lastRow=sheet.getLastRow();
   var rows=[];
-  workouts.forEach(function(workout){
+  if(workouts)
+   workouts.forEach(function(workout){
     var row=[
       workout.id,
       workout.start_time,
@@ -149,7 +156,10 @@ function loadAllWorkoutsForRide(ride_id){
     rows.push(row);
   });
   
+  if(workouts && workouts.length){
     sheet.getRange(lastRow+1, 1, workouts.length, rows[0].length).setValues(rows);
+  }
+    eventEnd(event,workouts&& workouts.length?workouts.length : 0);
    return workouts;
 }
 

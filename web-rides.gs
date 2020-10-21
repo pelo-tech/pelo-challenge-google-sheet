@@ -13,6 +13,8 @@ function getRideDetails(id){
 
 
 function getRides(pageNumber, pageSize, queryString){
+var event=eventStart("GetRides",pageNumber+","+pageSize+","+queryString);
+
   console.log("GetClasses ("+pageNumber+","+pageSize+", "+queryString);
   if(!pageNumber) pageNumber=0;
   if(!pageSize) pageSize=10;
@@ -74,5 +76,6 @@ function getRides(pageNumber, pageSize, queryString){
   //    o
   // -\/^\/-
   // Whatever!
+  eventEnd(event, rideObjects.length);
   return  JSON.parse(JSON.stringify(results));
 }

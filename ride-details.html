@@ -16,6 +16,9 @@ angular.module('pelotonApp', [])
   .controller('PelotonRideController', function($scope, $httpParamSerializer) {
     var rideController = this;
     rideController.ride=JSON.parse("<?=  JSON.stringify(getRideDetails(ride_id)) ?>");
+    rideController.loadWorkoutsForRide=function(ride_id){
+     google.script.run.loadRaceResults(ride_id);
+    };
     });
 </script>
 </head>
@@ -51,6 +54,8 @@ angular.module('pelotonApp', [])
        <br><b>Duration:</b> {{peloton.ride.duration / 60}} Minutes
        <br><b>Difficulty Rating:</b> {{peloton.ride.difficulty_estimate *100|number:1}}%
        <br><b>Total Following Workouts:</b> {{peloton.ride.total_following_workouts}}
+         <button ng-show="peloton.ride.total_following_workouts > 0" ng-click="peloton.loadWorkoutsForRide(peloton.ride.id)" 
+   class="badge badge-pill badge-danger">Process Ride Results</button>
        <br><b>Your Workouts:</b> {{peloton.ride.total_user_workouts}}
        <br><b>Favorite:</b> {{peloton.ride.is_favorite}}
        </p>
