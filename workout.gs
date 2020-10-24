@@ -153,11 +153,21 @@ var event=eventStart("Load All Workouts",ride_id);
        row.push(extended.max_speed);
        row.push(extended.avg_speed);
     }
+    // Add the lookup for gender and bracket
+    row.push("VLOOKUP(LOWER(C2),'Form Responses'!B:D,3,false)");
+    row.push("VLOOKUP(LOWER(C2),'Form Responses'!B:D,2,false)");
     rows.push(row);
   });
   
   if(workouts && workouts.length){
     sheet.getRange(lastRow+1, 1, workouts.length, rows[0].length).setValues(rows);
+    for(var i=0; i< rows.length ; ++i){
+      var _row=lastRow+1+i;
+      var _col1=rows[i].length;
+      var _col2=rows[i].length-1;
+      sheet.getRange(_row, _col1).setFormula(sheet.getRange(_row, _col1).getValue());
+      sheet.getRange(_row, _col2).setFormula(sheet.getRange(_row, _col2).getValue());
+    }
   }
     eventEnd(event,workouts&& workouts.length?workouts.length : 0);
    return workouts;
