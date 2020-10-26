@@ -18,6 +18,7 @@ eventEnd(1,4);
 }
 
 function eventStart(name, arguments){
+Logger.log("EventStart: "+name+" /// "+arguments);
   logSheet=SpreadsheetApp.getActive().getSheetByName(LOG_SHEET_NAME);
   var id=1+ logSheet.getDataRange().getLastRow();
   var data=[[name,new Date(),arguments, null, null, null]];
@@ -33,6 +34,7 @@ function eventEnd(id, result){
   if(start) duration=now.getTime()-start.getTime();
   var data=[[result, new Date(), duration]];
   logSheet.getRange(id,4,1, 3).setValues(data);
+  Logger.log("Event End: "+id+" /// "+result +" /// Duration: "+duration+"ms");
 }
 
 function processLogin(username, password){

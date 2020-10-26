@@ -3,6 +3,7 @@ function onOpen() {
       .createMenu('Peloton')
       .addItem('Login', 'showSidebarLogin')
       .addItem('Find Rides', 'showSidebarRides')
+      .addItem('Find Users', 'showSidebarUsers')
       .addToUi();
 }
 
@@ -30,14 +31,30 @@ function showSidebarLogin() {
 }
 
 function showSidebarRides() {
-  var tmpl = HtmlService.createTemplateFromFile('rides-sidebar-ng.html').evaluate();
+  var tmpl = HtmlService.createTemplateFromFile('rides-sidebar.html').evaluate();
   var html=HtmlService.createHtmlOutput().setContent(tmpl.getContent())
     .setTitle('Peloton On-Demand Ride Search');
   SpreadsheetApp.getUi() 
       .showSidebar(html);
 }
 
+function showSidebarUsers() {
+  var tmpl = HtmlService.createTemplateFromFile('users-sidebar.html').evaluate();
+  var html=HtmlService.createHtmlOutput().setContent(tmpl.getContent())
+    .setTitle('Peloton User Search');
+  SpreadsheetApp.getUi() 
+      .showSidebar(html);
+}
 
+
+function displayUser(id){
+  var template=HtmlService.createTemplateFromFile("user-details.html");
+  template.user_id=id;
+  var output=template.evaluate();
+  var html=HtmlService.createHtmlOutput().setContent(output.getContent()).setWidth(800).setHeight(800).setTitle("User Details");
+  SpreadsheetApp.getUi().showModalDialog(html,"User Details");
+  }
+  
 function showRideDetails(id){
   var template=HtmlService.createTemplateFromFile("ride-details.html");
   template.ride_id=id;
