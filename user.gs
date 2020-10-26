@@ -12,6 +12,7 @@ function getUserProfile(username) {
 
   var profile={
     username:data.username,
+    location: data.location,
     user_id: data.id,
     last_workout: data.last_workout_at,
     image_url:data.image_url,
@@ -20,7 +21,8 @@ function getUserProfile(username) {
     private:data.is_profile_private,
     rides: data.total_pedaling_metric_workouts,
     following_user: (data.relationship  && data.relationship.me_to_user =='following'),
-    user_following_me: ( data.relationship  &&  data.relationship.user_to_me =='following')
+    user_following_me: ( data.relationship  &&  data.relationship.user_to_me =='following'),
+    relationship: data.relationship
   };
   console.log(profile);
   return profile;
