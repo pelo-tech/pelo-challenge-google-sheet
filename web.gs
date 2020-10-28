@@ -4,10 +4,12 @@ function testSubmit(){
 }
 
 function onFormSubmit(event){
+ 
   Logger.log(JSON.stringify(event));
   Logger.log(event.namedValues);
   var message="";
   var username=event.namedValues["Leaderboard Name"][0];
+  var formEvent=eventStart("New Registration", username);
   var profile=null;
   if(username!=null){
      Logger.log("Scrubbing username:"+username);
@@ -69,7 +71,7 @@ function onFormSubmit(event){
       }
     } catch (x){
     status="No User Found";
-    Logger.log("Error Loading PRofile "+JSON.stringify(x));
+    Logger.log("Error Loading Profile "+JSON.stringify(x));
     message="Error resolving user profile "+username+": "+JSON.stringify(x);
   }    
   
@@ -91,14 +93,25 @@ function onFormSubmit(event){
   regSheet=SpreadsheetApp.getActive().getSheetByName(REGISTRATION_SHEET_NAME);
   var data=[];
   var keys=Object.keys(formValues).sort();
+  
+  // Put a second copy of these at front of sheet  so VLOOKUP will work
+  var front=["Timestamp","UserID","Leaderboard Name"];
+  for(var i=0; i<front.length;++i){
+    data.push(formValues[front[i]]);
+  }
+
   for(var i=0;i<keys.length;++i){
     data.push(formValues[keys[i]]);
   }
+  
   var id=regSheet.getDataRange().getLastRow();
   var rows=[];
   
-  if(id==1) rows.push(keys);
+  var columns=front.concat(keys);
+  
+  if(id==1) rows.push(columns);
   rows.push(data);
   Logger.log(JSON.stringify(rows));
-  regSheet.getRange(id==1?1:id+1,1,rows.length,keys.length).setValues(rows);
+  regSheet.getRange(id==1?1:id+1,1,rows.length,columns.length).setValues(rows);
+  eventEnd(formEvent, username+":"+status);
 }
