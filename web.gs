@@ -88,8 +88,10 @@ function onFormSubmit(event){
   
   var options={htmlBody:html};
   if(cfg.email.cc) options.cc=cfg.email.cc;
+  var subject=cfg.email.subject;
+  if(!subject) subject="Peloton Google Form Signup";
   
-  GmailApp.sendEmail(to,"New Pelo NovPZ Signup ["+username+" : "+status+"]","",options);
+  GmailApp.sendEmail(to, subject+" ["+username+" : "+status+"]","",options);
   regSheet=SpreadsheetApp.getActive().getSheetByName(REGISTRATION_SHEET_NAME);
   var data=[];
   var keys=Object.keys(formValues).sort();
