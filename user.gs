@@ -80,6 +80,34 @@ function searchUsers(query){
   }
 }
 
+// This function may be expensive as we need to get a workout history to find a workout that's a cycling workout, then get its details.
+function bruteForceGetFTPForUser(user_id){
+var event= eventStart("BruteForceGetFTPForUser", user_id);
+  var peloton=getConfigDetails().peloton;
+  var url="https://api.onepeloton.com/api/user/"+user_id+"/workouts?limit=10&page=0&sort_by=-created";
+  var json= UrlFetchApp.fetch(url,peloton.http_options).getContentText();
+  var response = JSON.parse(json);
+  if(response.data && response.data.length){
+    var cycling=response.data.filter(function(val,idx,arr){return val.metrics_type=="cycling";});
+    if(cycling.length){
+      var workout=loadWorkout(cycling[0].id);
+      if(workout && workout.ftp_info) {
+          eventEnd(event,workout.ftp_info.ftp);
+          return workout.ftp_info.ftp;
+          }
+      else {
+           eventEnd(event,"No FTP info in last"+response.data.length+" workouts");
+           return null;
+      }
+    } else{
+        eventEnd(event,"No Cycling workouts in last"+response.data.length+" workouts");
+        return null;
+      }
+    } else{
+       eventEnd(event,"No response from user workout list");
+      return null;
+    }
+}
 
 function onChange(e){
   var sheet= SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();

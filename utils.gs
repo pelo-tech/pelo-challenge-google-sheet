@@ -80,11 +80,26 @@ function getConfigDetails(){
    var tz=cfg.getRange(TIME_ZONE_CELL).getValue();
    var eligible_ride_age=cfg.getRange(ELIGIBLE_RIDE_AGE_CELL).getValue();
   
+
+  var dataSettings={
+     join_sheet_name:cfg.getRange(DATA_JOIN_SHEETNAME_CELL).getValue(),
+     join_range:cfg.getRange(DATA_JOIN_RANGE_CELL).getValue(),
+     col1_name:cfg.getRange(DATA_JOIN_COL1_NAME_CELL).getValue(),
+     col1_column:cfg.getRange(DATA_JOIN_COL1_COLUMN_CELL).getValue(),
+     col2_name:cfg.getRange(DATA_JOIN_COL2_NAME_CELL).getValue(),
+     col2_column:cfg.getRange(DATA_JOIN_COL2_COLUMN_CELL).getValue(),
+     col3_name:cfg.getRange(DATA_JOIN_COL3_NAME_CELL).getValue(),
+     col3_column:cfg.getRange(DATA_JOIN_COL3_COLUMN_CELL).getValue()
+  };
+
   return { 
     "email":{
       "to": cfg.getRange(EMAIL_TO_CELL).getValue(),
       "cc": cfg.getRange(EMAIL_CC_CELL).getValue()
     },
+    
+    "dataSettings" :dataSettings,
+    
     "peloton":{
       "distance_units":cfg.getRange(DISTANCE_UNIT_CELL).getValue(),
       "http_base":PELOTON_API_BASE,

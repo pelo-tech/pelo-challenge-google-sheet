@@ -32,7 +32,9 @@ function getRecentFollowingWorkouts(ride_id, page, limit){
                   user_image: workout.user.image_url,
                   user_location: workout.user.location,
                   user_private: workout.user.is_profile_private,
-                  user_rides: workout.user.total_pedaling_metric_workouts
+                  user_rides: workout.user.total_pedaling_metric_workouts,
+                  bufferring: workout.total_video_buffering_seconds,
+                  bufferringv2: workout.v2_total_video_buffering_seconds
                  });               
              });
   
@@ -107,10 +109,11 @@ var event=eventStart("PurgeWorkouts",ride_id);
 }
 
 function loadAllWorkoutsForRide(ride_id){
-var event=eventStart("Load All Workouts",ride_id);
+ var config=getConfigDetails();
+ var event=eventStart("Load All Workouts",ride_id);
 
   var ride=getRide(ride_id);
-  var days=getConfigDetails().peloton.eligible_ride_age;
+  var days=config.peloton.eligible_ride_age;
   var workouts=getRecentFollowingWorkoutsForClass(ride_id, days);
   console.log("Got "+workouts.length+" workouts performed on "+ride.title+" by "+ride.instructor.name);
   console.log("Purging any existing workouts on this ride");
@@ -153,9 +156,21 @@ var event=eventStart("Load All Workouts",ride_id);
        row.push(extended.max_speed);
        row.push(extended.avg_speed);
     }
-    // Add the lookup for gender and bracket
-    row.push("=VLOOKUP(LOWER(INDIRECT(CONCAT(\"C\",ROW()))),'Form Responses'!B:D,3,false)");
-    row.push("=VLOOKUP(LOWER(INDIRECT(CONCAT(\"C\",ROW()))),'Form Responses'!B:D,2,false)");
+    // Add the lookup for gender and bracket or any other table joins
+    var dataSettings=config.dataSettings;
+    var join_sheet=dataSettings.join_sheet_name;
+    var join_range=dataSettings.join_range;
+    var cols=[dataSettings.col1_column,  dataSettings.col2_column, dataSettings.col3_column];
+    
+    for(var i=0; i<cols.length; ++i){
+          var col=cols[i];
+          if(col && col!=""){
+            row.push("=VLOOKUP(LOWER(INDIRECT(CONCAT(\"K\",ROW()))),'"+join_sheet+"'!"+join_range+","+col+",false)");
+          } else row.push(null);
+    }
+   
+    row.push(workout.bufferring)
+    row.push(workout.bufferingv2);
     rows.push(row);
   });
   
