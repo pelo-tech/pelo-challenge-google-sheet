@@ -95,7 +95,8 @@ function getConfigDetails(){
   return { 
     "email":{
       "to": cfg.getRange(EMAIL_TO_CELL).getValue(),
-      "cc": cfg.getRange(EMAIL_CC_CELL).getValue()
+      "cc": cfg.getRange(EMAIL_CC_CELL).getValue(),
+      "subject": cfg.getRange(EMAIL_SUBJECT_CELL).getValue()
     },
     
     "dataSettings" :dataSettings,
