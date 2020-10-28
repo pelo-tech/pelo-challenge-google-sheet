@@ -160,12 +160,13 @@ function loadAllWorkoutsForRide(ride_id){
     var dataSettings=config.dataSettings;
     var join_sheet=dataSettings.join_sheet_name;
     var join_range=dataSettings.join_range;
+    var results_join_col=dataSettings.results_join_col;
     var cols=[dataSettings.col1_column,  dataSettings.col2_column, dataSettings.col3_column];
     
     for(var i=0; i<cols.length; ++i){
           var col=cols[i];
           if(col && col!=""){
-            row.push("=VLOOKUP(LOWER(INDIRECT(CONCAT(\"K\",ROW()))),'"+join_sheet+"'!"+join_range+","+col+",false)");
+            row.push("=VLOOKUP(LOWER(INDIRECT(CONCAT(\""+results_join_col+"\",ROW()))),'"+join_sheet+"'!"+join_range+","+col+",false)");
           } else row.push(null);
     }
    

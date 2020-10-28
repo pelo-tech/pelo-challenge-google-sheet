@@ -82,6 +82,7 @@ function getConfigDetails(){
   
 
   var dataSettings={
+     results_join_col:cfg.getRange(DATA_RESULTS_JOIN_COL).getValue(),
      join_sheet_name:cfg.getRange(DATA_JOIN_SHEETNAME_CELL).getValue(),
      join_range:cfg.getRange(DATA_JOIN_RANGE_CELL).getValue(),
      col1_name:cfg.getRange(DATA_JOIN_COL1_NAME_CELL).getValue(),
