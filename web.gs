@@ -49,10 +49,23 @@ function onFormSubmit(event){
       // Load Additional User Data
       if(profile.user_id){
         Logger.log("Trying to get FTP");
-        var ftp=bruteForceGetFTPForUser(profile.user_id);
+        var ftp=null;
+          try{
+           ftp=bruteForceGetFTPForUser(profile.user_id);
+          } catch (e){
+            Logger.log("Failed to get FTP info. Is user private? "+e);
+            message+="| Cannot get FTP info";
+          }
         event.namedValues["FTP"]=[ftp];
         Logger.log("Got FTP" +ftp);
-        var overview=getUserOverview(profile.user_id);
+        var overview=null;
+        try{
+            overview=getUserOverview(profile.user_id);
+        } catch (e){
+         Logger.log("Failed to get user overview/PR list. Is user private? "+e);
+         message+="| Cannot get user overview";
+        }
+         
         event.namedValues["PR5 min"]=[null];
         event.namedValues["PR10 min"]=[null];
         event.namedValues["PR15 min"]=[null];
@@ -62,7 +75,7 @@ function onFormSubmit(event){
         event.namedValues["PR60 min"]=[null];
         event.namedValues["PR75 min"]=[null];
         event.namedValues["PR90 min"]=[null];
-        if(overview.personal_records){
+        if(overview && overview.personal_records){
           var records=overview.personal_records.filter(function(val,idx,arr){return val.name=='Cycling'})[0].records;
           for(var i=0;i<records.length;++i){
             event.namedValues["PR"+records[i].name]=[records[i].value];
@@ -72,7 +85,7 @@ function onFormSubmit(event){
     } catch (x){
     status="No User Found";
     Logger.log("Error Loading Profile "+JSON.stringify(x));
-    message="Error resolving user profile "+username+": "+JSON.stringify(x);
+    message+="| Error resolving user profile "+username+": "+JSON.stringify(x);
   }    
   
   var formValues = event.namedValues;
