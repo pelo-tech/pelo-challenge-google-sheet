@@ -110,7 +110,7 @@ var event=eventStart("PurgeWorkouts",ride_id);
 
 function loadAllWorkoutsForRide(ride_id, competition){
  var config=getConfigDetails();
- var event=eventStart("Load All Workouts",ride_id);
+ var event=eventStart("Load All Workouts",ride_id +","+competition);
 
   var ride=getRide(ride_id);
   var days=config.peloton.eligible_ride_age;
@@ -172,6 +172,7 @@ function loadAllWorkoutsForRide(ride_id, competition){
    
     row.push(workout.bufferring)
     row.push(workout.bufferingv2);
+    row.push(competition);
     rows.push(row);
   });
   
