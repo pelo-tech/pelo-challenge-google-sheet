@@ -18,6 +18,13 @@ function getRecentFollowingWorkouts(ride_id, page, limit){
   };
   
   result.data.map(workout => {
+  
+       // Get latest ride count for a user  to get info on impending milestone
+        var rides=0;
+        if(workout.user && workout.user.workout_counts){
+          workout.user.workout_counts.forEach(obj=>{ if(obj.name=='Cycling') rides=obj.count; });
+        }
+        
                   page.workouts.push({
                    
                   id: workout.id,
@@ -34,7 +41,8 @@ function getRecentFollowingWorkouts(ride_id, page, limit){
                   user_private: workout.user.is_profile_private,
                   user_rides: workout.user.total_pedaling_metric_workouts,
                   bufferring: workout.total_video_buffering_seconds,
-                  bufferringv2: workout.v2_total_video_buffering_seconds
+                  bufferringv2: workout.v2_total_video_buffering_seconds,
+                  total_rides:  rides
                  });               
              });
   
@@ -137,7 +145,8 @@ function loadAllWorkoutsForRide(ride_id, competition){
       workout.user_id,
       workout.timezone,
       workout.platform,
-      workout.user_private
+      workout.user_private,
+      workout.total_rides
     ];
     Logger.log("Getting extended workout details for "+workout.id);
     var extended=getFullWorkoutData(workout.id);
