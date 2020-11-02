@@ -38,9 +38,9 @@ function onFormSubmit(event){
             var result=changeRelationship("follow",profile.user_id);
             message +=" Relationship Changed: me to user:"+result.me_to_user +", user to me:"+result.user_to_me;
             status = "Requested to follow: "+result.me_to_user;
-            event.namedValues["FollowRequest"]=[result.me_to_user];
+            event.namedValues["AlreadyFollowing"]=[result.me_to_user];
          }  catch (x){
-           event.namedValues["FollowRequest"]=["Error Following"];
+           event.namedValues["AlreadyFollowing"]=["Error Following"];
            status="Error Following User";
            Logger.log("Error Following "+JSON.stringify(x));
            message+="Error Following user "+username+": "+JSON.stringify(x);
