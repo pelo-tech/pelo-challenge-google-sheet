@@ -15,9 +15,14 @@
 angular.module('pelotonApp', [])
   .controller('PelotonRideController', function($scope, $httpParamSerializer) {
     var rideController = this;
+    rideController.competition=null;
+    rideController.competitions=JSON.parse("<?= JSON.stringify(getCompetitions()) ?>");
     rideController.ride=JSON.parse("<?=  JSON.stringify(getRideDetails(ride_id)) ?>");
     rideController.loadWorkoutsForRide=function(ride_id){
-     google.script.run.loadRaceResults(ride_id);
+     if(rideController.competition==null) {
+     alert("Please select a competition. Add one to the competitions worksheet if it's missing");
+     }
+     google.script.run.loadRaceResults(ride_id, rideController.competition);
     };
     });
 </script>
@@ -56,6 +61,11 @@ angular.module('pelotonApp', [])
        <br><b>Total Following Workouts:</b> {{peloton.ride.total_following_workouts}}
          <button ng-show="peloton.ride.total_following_workouts > 0" ng-click="peloton.loadWorkoutsForRide(peloton.ride.id)" 
    class="badge badge-pill badge-danger">Process Ride Results</button>
+   <label for="competitionSelect"> Select Competition to load Results (Required): </label>
+    <select name="competitionSelect" id="competitionSelect" ng-model="peloton.competition">
+      <option ng-repeat="comp in peloton.competitions |orderBy:'comp.Start.getTime()':reverse" value="{{comp.Name}}">{{comp.Name}}</option>
+    </select>
+    
        <br><b>Your Workouts:</b> {{peloton.ride.total_user_workouts}}
        <br><b>Favorite:</b> {{peloton.ride.is_favorite}}
        </p>

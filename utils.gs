@@ -7,7 +7,22 @@ function setup(){
   var data=processLogin(username,password);
 
   ui.alert("Your session ID has been set to "+data.session_id+"\n Your User ID set to "+data.user_id);
+}
 
+function getDataAsObjects(sheet){
+  var rows=sheet.getDataRange().getValues();
+  var result=[];
+  if(rows.length>1){
+    var fields=rows[0];
+    for(var row=1; row<rows.length;++row){
+      var obj={};
+      for(var col=0; col<fields.length;++col){  
+        obj[fields[col]]=rows[row][col];
+      }
+      result.push(obj);
+    }
+  } 
+  return result;
 }
 
 function testEventStart(){

@@ -108,7 +108,7 @@ var event=eventStart("PurgeWorkouts",ride_id);
   eventEnd(event, rows_to_delete.length);
 }
 
-function loadAllWorkoutsForRide(ride_id){
+function loadAllWorkoutsForRide(ride_id, competition){
  var config=getConfigDetails();
  var event=eventStart("Load All Workouts",ride_id);
 
@@ -178,6 +178,9 @@ function loadAllWorkoutsForRide(ride_id){
   if(workouts && workouts.length){
     sheet.getRange(lastRow+1, 1, workouts.length, rows[0].length).setValues(rows);
   }
+  
+   storeRide(ride, competition, workouts?workouts.length:0);
+   
    eventEnd(event,workouts&& workouts.length?workouts.length : 0);
    return workouts;
 }

@@ -21,7 +21,8 @@ var EMAIL_SUBJECT_CELL="B21";
 var DISTANCE_UNIT_CELL="B11";
 var LOG_SHEET_NAME="System Log";
 var REGISTRATION_SHEET_NAME="Registration";
-
+var COMPETITIONS_SHEET_NAME="Competitions";
+ 
 
 /*****
    Dynamic Table Join Settings
