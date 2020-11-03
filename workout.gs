@@ -140,6 +140,7 @@ function loadAllWorkoutsForRide(ride_id, competition){
       workout.output,
       ride.instructor.name,
       ride.title,
+      ride.duration / 60,
       ride.aired,
       ride.id,
       workout.user_id,
