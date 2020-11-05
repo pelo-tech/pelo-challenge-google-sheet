@@ -12,7 +12,7 @@ function loadRaceResults(ride_id, competition){
 
 function purgeRaceResults(ride_id, competition){
   var extra=" for all events. ";
-  if(competition) " for event ("+competition+") only.";
+  if(competition) extra=" for event ("+competition+") only.";
   SpreadsheetApp.getUi().alert("Purging results for this ride "+extra+ "This might take a while.");
   try{
      var workouts=purgeWorkouts(ride_id, competition);

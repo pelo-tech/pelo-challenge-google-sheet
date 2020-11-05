@@ -46,8 +46,8 @@ function getRecentFollowingWorkouts(ride_id, page, limit){
                  });               
              });
   
-  console.log(page);
-console.log("Returning page "+ (page.page+1) +" out of "+page.page_count+" pages, containing "+page.limit+" records out of the total "+page.total);
+  Logger.log(page);
+  Logger.log("Returning page "+ (page.page+1) +" out of "+page.page_count+" pages, containing "+page.limit+" records out of the total "+page.total);
   return page;
 }
 
@@ -60,19 +60,19 @@ var event=eventStart("Get Following Workouts",ride_id +", max "+days_ago+"d ago"
   var cutoff=new Date().getTime()-(days_ago * 24*60*60*1000);
   while(!done){
     var results=getRecentFollowingWorkouts(ride_id, page, page_size);
-    console.log("Loading page "+page);
+    Logger.log("Loading page "+page);
     results.workouts.map(workout => {
                          var user=workout.user_id;
                          if(!all_workouts[user] || all_workouts[user].start_time.getTime() < workout.start_time.getTime()){
       if(workout.start_time.getTime()> cutoff){
-                console.log("Adding eligible ride by "+workout.username+" from "+workout.start_time);
+                Logger.log("Adding eligible ride by "+workout.username+" from "+workout.start_time);
                                all_workouts[user]=workout;
       } else {
-        console.log("Ignoring ineligible ride by "+workout.username+" from "+workout.start_time);
+        Logger.log("Ignoring ineligible ride by "+workout.username+" from "+workout.start_time);
       }
                              }
                          });
-  console.log("Show Next :"+results.show_next+"; total pages "+results.page_count);
+  Logger.log("Show Next :"+results.show_next+"; total pages "+results.page_count);
     if(!results.show_next || page==(results.page_count-1)){
       done=true;
     } else {
@@ -90,9 +90,9 @@ function testFollowingWorkouts(){
 
   var results=getRecentFollowingWorkoutsForClass(ride_id, 2);
 
-  console.log(results);
+  Logger.log(results);
 
-  console.log("I got "+ results.length+" unique user workouts for ride "+ride_id);
+  Logger.log("I got "+ results.length+" unique user workouts for ride "+ride_id);
   
 }
 
@@ -101,25 +101,33 @@ function testLoadAllWorkoutsForRide(){
 }
  
 
-function purgeWorkouts(ride_id){
-var event=eventStart("PurgeWorkouts",ride_id);
+function purgeWorkouts(ride_id, competition){
+var event=eventStart("PurgeWorkouts",ride_id+","+competition);
   var sheet=SpreadsheetApp.getActiveSpreadsheet().getSheetByName(RESULTS_SHEET_NAME);
   var rows = sheet.getDataRange().getValues();
   var cols=rows[0];
   var ride_id_column=cols.indexOf("Ride ID");
+  var competition_column=cols.indexOf("Competition");
   if(ride_id_column==-1){
     eventEnd(event,"Error - cannot find Ride ID Column!!!!");
     return;
   } 
+  if(competition && competition_column==-1){
+    eventEnd(event,"Error - Was supposed to delete for competition "+competition+" but cannot find column");
+    return;
+  }
   Logger.log("Found Ride ID Column at index "+ride_id_column);
+  Logger.log("Found Competition Column at index "+competition_column);
   var rows_to_delete=[];
   for(var i=0; i<rows.length;++i){
-    if(rows[i][ride_id_column]==ride_id) rows_to_delete.push( i+1 /*row number not array idx*/);
+    if( (rows[i][ride_id_column]==ride_id) && (competition==null || rows[i][competition_column]==competition)) {
+      rows_to_delete.push( i+1 /*row number not array idx*/);
+      }
   }
   // reverse sort, to delete from bottom up
   rows_to_delete.sort(function(a, b){return b-a});
   rows_to_delete.forEach(function(val){ sheet.deleteRow(val);});
-  console.log("Deleted "+rows_to_delete.length+" rows");
+  Logger.log("Deleted "+rows_to_delete.length+" rows");
   eventEnd(event, rows_to_delete.length);
 }
 
@@ -130,9 +138,9 @@ function loadAllWorkoutsForRide(ride_id, competition){
   var ride=getRide(ride_id);
   var days=config.peloton.eligible_ride_age;
   var workouts=getRecentFollowingWorkoutsForClass(ride_id, days);
-  console.log("Got "+workouts.length+" workouts performed on "+ride.title+" by "+ride.instructor.name);
-  console.log("Purging any existing workouts on this ride");
-  purgeWorkouts(ride.id);
+  Logger.log("Got "+workouts.length+" workouts performed on "+ride.title+" by "+ride.instructor.name);
+  Logger.log("Purging any existing workouts on this ride (competition="+competition+")");
+  purgeWorkouts(ride.id, competition);
   var sheet=SpreadsheetApp.getActiveSpreadsheet().getSheetByName(RESULTS_SHEET_NAME);
   var lastRow=sheet.getLastRow();
   var rows=[];
