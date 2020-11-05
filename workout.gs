@@ -99,12 +99,19 @@ function testFollowingWorkouts(){
 function testLoadAllWorkoutsForRide(){
   loadAllWorkoutsForRide("2dbea3318ed6468caad5c9726005e08f");
 }
+ 
 
 function purgeWorkouts(ride_id){
 var event=eventStart("PurgeWorkouts",ride_id);
   var sheet=SpreadsheetApp.getActiveSpreadsheet().getSheetByName(RESULTS_SHEET_NAME);
   var rows = sheet.getDataRange().getValues();
-  var ride_id_column=9; // array index, not column number which would be 10
+  var cols=rows[0];
+  var ride_id_column=cols.indexOf("Ride ID");
+  if(ride_id_column==-1){
+    eventEnd(event,"Error - cannot find Ride ID Column!!!!");
+    return;
+  } 
+  Logger.log("Found Ride ID Column at index "+ride_id_column);
   var rows_to_delete=[];
   for(var i=0; i<rows.length;++i){
     if(rows[i][ride_id_column]==ride_id) rows_to_delete.push( i+1 /*row number not array idx*/);
