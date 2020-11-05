@@ -16,18 +16,26 @@ angular.module('pelotonApp', [])
   .controller('PelotonRideController', function($scope, $httpParamSerializer) {
     var rideController = this;
     rideController.competition=null;
+    rideController.loading=false;
     rideController.competitions=JSON.parse("<?= JSON.stringify(getCompetitions()) ?>");
     rideController.ride=JSON.parse("<?=  JSON.stringify(getRideDetails(ride_id)) ?>");
+    
     rideController.loadWorkoutsForRide=function(ride_id){
+    rideController.loading=true;
      if(rideController.competition==null) {
      alert("Please select a competition. Add one to the competitions worksheet if it's missing");
+     rideController.loading=false;
      }
      google.script.run.loadRaceResults(ride_id, rideController.competition);
     };
   
      rideController.purgeWorkoutsForRide=function(ride_id){
+     rideController.loading=true;
      if(rideController.competition==null) {
-     if(!confirm("Purge ALL results for any Event? Select 'Cancel/No' if you want to purge results for a specific event, and select the event before clicking this button!")) return;
+     if(!confirm("Purge ALL results for any Event? Select 'Cancel/No' if you want to purge results for a specific event, and select the event before clicking this button!")) {
+     rideController.loading=false;
+     return;
+     }
      }
      google.script.run.purgeRaceResults(ride_id, rideController.competition);
     };
@@ -75,12 +83,15 @@ angular.module('pelotonApp', [])
     <select name="competitionSelect" id="competitionSelect" ng-model="peloton.competition">
       <option ng-repeat="comp in peloton.competitions |orderBy:'comp.Start.getTime()':reverse" value="{{comp.Name}}">{{comp.Name}}</option>
     </select>
+    
+    <div   ng-if="peloton.loading"  style="text-align:center"> <i  class="fa fa-circle-o-notch fa-spin fa-3x fa-fw"></i></div>
+
     <br>
-         <button ng-show="peloton.ride.total_following_workouts > 0" ng-click="peloton.loadWorkoutsForRide(peloton.ride.id)" 
+         <button ng-disabled="peloton.loading" ng-show="peloton.ride.total_following_workouts > 0" ng-click="peloton.loadWorkoutsForRide(peloton.ride.id)" 
    class="badge badge-pill badge-danger">Load/Refresh Ride Results</button>
 
     <br>
-         <button  ng-click="peloton.purgeWorkoutsForRide(peloton.ride.id)" 
+         <button ng-disabled="peloton.loading"  ng-click="peloton.purgeWorkoutsForRide(peloton.ride.id)" 
    class="badge badge-pill badge-secondary">Purge Ride Results</button>
  
       </div>

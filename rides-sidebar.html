@@ -24,6 +24,7 @@ angular.module('pelotonApp', ["infinite-scroll"])
     rideController.totalRides=null;
     rideController.rides=[];
     rideController.page=0;
+    rideController.refreshing=false;
     rideController.pages=0;
     rideController.filters=JSON.parse("<?=  JSON.stringify(getRideFilters()) ?>");
 
@@ -52,7 +53,6 @@ angular.module('pelotonApp', ["infinite-scroll"])
         rideController.rides.push.apply(rideController.rides,result.rides);
         rideController.pages=result.pages;
 
-        $scope.$digest();
         rideController.loading=false;
         $scope.$digest();
 
@@ -70,11 +70,12 @@ angular.module('pelotonApp', ["infinite-scroll"])
     
     
     rideController.loadRideCounts=function(){
-      
+      rideController.refreshing=true;
      google.script.run.withSuccessHandler(function(result){
      console.log(JSON.stringify(result));
         rideController.resetRides();
         rideController.totalRides=result.total;
+        rideController.refreshing=false;
         $scope.$digest();
         })
       .getRides(0,1, rideController.getQueryParams());
@@ -154,7 +155,7 @@ angular.module('pelotonApp', ["infinite-scroll"])
    </div>
    <div class="card-footer">
    <button ng-disabled="! peloton.totalRides" ng-click="peloton.loadRides()"
-   class="badge badge-pill badge-danger" id="load">Load <span id='total' ng-show="peloton.totalRides!=null">{{peloton.totalRides}}</span> Classes </button> 
+   class="badge badge-pill badge-danger" id="load">Load <i ng-if="peloton.refreshing" class="fa fa-circle-o-notch fa-spin fa-lg fa-fw"></i><span id='total' ng-show="peloton.totalRides!=null">{{peloton.totalRides}}</span> Classes </button> 
      <a  ng-disabled="! peloton.totalRides" target="_blank" class="text-danger" title="Search on Peloton Site" href="https://members.onepeloton.com/classes/cycling?utm_source=ios_app&utm_medium=in_app&{{peloton.getQueryParams()}}">
            <span class="fa fa-share"></span>
         </a>
