@@ -113,9 +113,14 @@ angular.module('pelotonApp', [])
        <span >{{user.total_followers}} Followers.  {{user.total_following}} following {{user.total_workouts}} workouts</span>
          <div ng-if="user.relationship">
           Relationship: Me to user: {{user.relationship.me_to_user}} // User to me: {{user.relationship.user_to_me}}
-         </div>
+        <br/>
+         <button ng-if="user.relationship.me_to_user=='following'" ng-click="peloton.unfollowUser(user.id)" class="badge badge-pill badge-secondary">Unfollow</button>
+         <button ng-if="user.relationship.me_to_user=='none'" ng-click="peloton.followUser(user.id)" class="badge badge-pill badge-primary">Follow</button>
+         <button ng-if="user.relationship.me_to_user=='follow_pending'"  disabled="true"  class="badge badge-pill badge-secondary">Follow Requested</button>
+         
+        </div>
      
-      <!-- <span ng-if="ride.user_workouts" class="badge badge-pill badge-success" title="You took this ride {{ride.user_workouts}} time(s)">Taken</span>
+      <!--<span ng-if="ride.user_workouts" class="badge badge-pill badge-success" title="You took this ride {{ride.user_workouts}} time(s)">Taken</span>
        button ng-if="ride.is_favorite" ng-click="peloton.clearBookmark(ride)" class="badge badge-pill badge-secondary">Bookmarked</button>
        <button ng-if="!ride.is_favorite" ng-click="peloton.addBookmark(ride)"  class="badge badge-pill badge-info">Add Bookmark</button 
 
