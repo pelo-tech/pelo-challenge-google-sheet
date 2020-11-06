@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html ng-app="pelotonApp">
+  <head>
+  <style>
+
+  </style>
+    <base target="_top">
+    
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.0/angular.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+<link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
+<script>
+angular.module('pelotonApp', [])
+  .controller('PelotonUserController', function($scope, $httpParamSerializer) {
+    var pelotonController = this;
+    pelotonController.loading=false;
+   
+    
+ pelotonController.displayResultsSheet=function(){
+     google.script.run.displayResultsSheet();
+
+ };
+ 
+     pelotonController.displaySelectedRide=function(){
+       google.script.run.displaySelectedRide();
+    };
+    
+ 
+    pelotonController.displaySelectedUser=function(){
+       google.script.run.displaySelectedUser();
+    };
+    
+    
+  });
+</script>
+</head>
+  <body ng-init="peloton.displayResultsSheet()" ng-controller="PelotonUserController as peloton"  >
+<div class="card" style="width: 18rem;">
+   <div class="card-header">Find Users</div>
+  <div class="card-body">
+     <h3>Utilities</h3>
+     To use this page, you will need to select a row in the results tab, and then click one of the buttons below
+     
+     <br><br>
+              <button  ng-click="peloton.displaySelectedUser()" class="badge badge-pill badge-secondary">Display Selected User</button>
+
+     <br><br>
+              <button  ng-click="peloton.displaySelectedRide()" class="badge badge-pill badge-secondary">Display Selected Workout</button>
+
+   </div>
+   <div class="card-footer">
+     
+     
+</div>
+</div>
+     
+
+ 
+</body>
+</html>
+

@@ -4,6 +4,7 @@ function onOpen() {
       .addItem('Login', 'showSidebarLogin')
       .addItem('Find Rides', 'showSidebarRides')
       .addItem('Find Users', 'showSidebarUsers')
+      .addItem('Tools', 'showSidebarTools')
       .addToUi();
 }
 
@@ -22,6 +23,9 @@ function handleSidebarLogin(obj){
   return  JSON.parse(JSON.stringify(results));
 }
 
+function displayResultsSheet(){
+  SpreadsheetApp.getActive().getSheetByName(RESULTS_SHEET_NAME).activate();
+}
 function showSidebarLogin() {
   var html = HtmlService.createHtmlOutputFromFile('login-sidebar.html')
       .setTitle('Peloton Login')
@@ -37,6 +41,56 @@ function showSidebarRides() {
   SpreadsheetApp.getUi() 
       .showSidebar(html);
 }
+
+function getResultHeaders(){
+  var results=SpreadsheetApp.getActive().getSheetByName(RESULTS_SHEET_NAME);
+  var headers=results.getRange("A1:AZ1").getValues()[0];
+  return headers;
+  }
+function displaySelectedUser(){
+  var uidCol=getResultHeaders().indexOf("User ID");
+  Logger.log("UID Column: "+uidCol);
+  if(uidCol>-1){
+    var results=SpreadsheetApp.getActive().getSheetByName(RESULTS_SHEET_NAME);
+    var selection=results.getSelection();
+    if(!selection){
+      Logger.log("No selection in sheet.");
+      return;
+    }
+    var row=selection.getActiveRange().getRow();
+    Logger.log("Selection starts at row "+row);
+    var value=results.getRange(row, uidCol+1 /* convert arr index to col number */).getValue();
+    Logger.log("User ID is "+value);
+    displayUser(value);
+  }
+
+}
+function displaySelectedRide(){
+  var ridCol=getResultHeaders().indexOf("Ride ID");
+  Logger.log("RID Column: "+ridCol);
+  if(ridCol>-1){
+    var results=SpreadsheetApp.getActive().getSheetByName(RESULTS_SHEET_NAME);
+    var selection=results.getSelection();
+    if(!selection){
+      Logger.log("No selection in sheet.");
+      return;
+    }
+    var row=selection.getActiveRange().getRow();
+    Logger.log("Selection starts at row "+row);
+    var value=results.getRange(row, ridCol+1 /* convert arr index to col number */).getValue();
+    Logger.log("Ride ID is "+value);
+    showRideDetails(value);
+  }
+  }
+
+function showSidebarTools() {
+  var tmpl = HtmlService.createTemplateFromFile('tools-sidebar.html').evaluate();
+  var html=HtmlService.createHtmlOutput().setContent(tmpl.getContent())
+    .setTitle('Tools');
+  SpreadsheetApp.getUi() 
+      .showSidebar(html);
+}
+
 
 function showSidebarUsers() {
   var tmpl = HtmlService.createTemplateFromFile('users-sidebar.html').evaluate();
