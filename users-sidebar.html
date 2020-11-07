@@ -44,7 +44,7 @@ angular.module('pelotonApp', [])
     
     
     userController.searchUsers=function(){
-        userController.searchText = userController.searchText.replace(/[^A-Za-z0-9_]/gi, "");
+        userController.searchText = userController.searchText.replace(<?= VALID_USERNAME_REGEX ?>, "");
         userController.users=[];
         if(userController.searchText=="") return;
         userController.loading=true;

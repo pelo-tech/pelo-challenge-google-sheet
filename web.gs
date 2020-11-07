@@ -13,12 +13,13 @@ function onFormSubmit(event){
   var profile=null;
   if(username!=null){
      Logger.log("Scrubbing username:"+username);
-     username=username.replace(/[^A-Za-z0-9_]/gi, "");
+     username=username.replace(VALID_USERNAME_REGEX, "");
      Logger.log("Scrubbed username:"+username);
      }
   // Retrieve User Profile
   try{
       profile=getUserProfile(username);
+      username=profile.username;
       var status="Success Loading";
       message="Successfully Loaded User Profile: "+profile.username +" ("+profile.user_id+")";
       
