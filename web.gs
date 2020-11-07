@@ -76,7 +76,7 @@ function onFormSubmit(event){
         event.namedValues["PR60 min"]=[null];
         event.namedValues["PR75 min"]=[null];
         event.namedValues["PR90 min"]=[null];
-        if(overview && overview.personal_records){
+        if(overview && overview.personal_records && overview.personal_records.length>0){
           var records=overview.personal_records.filter(function(val,idx,arr){return val.name=='Cycling'})[0].records;
           for(var i=0;i<records.length;++i){
             event.namedValues["PR"+records[i].name]=[records[i].value];
@@ -85,7 +85,8 @@ function onFormSubmit(event){
       }
     } catch (x){
     status="No User Found";
-    Logger.log("Error Loading Profile "+JSON.stringify(x));
+    Logger.log(x);
+    Logger.log("Error Loading Profile "+x+" "+JSON.stringify(x));
     message+="| Error resolving user profile "+username+": "+JSON.stringify(x);
   }    
   
