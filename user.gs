@@ -1,7 +1,7 @@
 
 function getUserProfile(username) {
   if(!username || username.length==0) return null;
-  
+  var event=eventStart("Get User Profile",username);
   var config=getConfigDetails();
   var peloton=config.peloton;
   
@@ -25,10 +25,12 @@ function getUserProfile(username) {
     relationship: data.relationship
   };
   console.log(profile);
+  eventEnd(event,true);
   return profile;
 }
 
 function getUserOverview(user_id){
+  var event=eventStart("Get User Overview",user_id);
   var config=getConfigDetails();
   var peloton=config.peloton;
   
@@ -36,6 +38,7 @@ function getUserOverview(user_id){
   var json= UrlFetchApp.fetch(url,peloton.http_options).getContentText();
   var data = JSON.parse(json);
   console.log(data);
+  eventEnd(event,true);
   return data;
 }
 
