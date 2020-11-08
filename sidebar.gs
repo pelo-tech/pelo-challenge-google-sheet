@@ -42,46 +42,70 @@ function showSidebarRides() {
       .showSidebar(html);
 }
 
-function getResultHeaders(){
-  var results=SpreadsheetApp.getActive().getSheetByName(RESULTS_SHEET_NAME);
+function getResultHeaders(sheet){
+  var results=SpreadsheetApp.getActive().getSheetByName(sheet);
   var headers=results.getRange("A1:AZ1").getValues()[0];
   return headers;
   }
-function displaySelectedUser(){
-  var uidCol=getResultHeaders().indexOf("User ID");
-  Logger.log("UID Column: "+uidCol);
-  if(uidCol>-1){
-    var results=SpreadsheetApp.getActive().getSheetByName(RESULTS_SHEET_NAME);
-    var selection=results.getSelection();
+ 
+function getSelectedValue(sheetName, columnHeader){
+    Logger.log("Looking for "+columnHeader+" in "+sheetName);
+    var uidCol=getResultHeaders(sheetName).indexOf(columnHeader);
+    if(uidCol==-1){
+      Logger.log("Cannot find "+columnHeader+" in "+sheetName);
+      return null;
+    }
+    var sheet=SpreadsheetApp.getActive().getSheetByName(sheetName);
+    var selection=sheet.getSelection();
     if(!selection){
-      Logger.log("No selection in sheet.");
-      return;
+      Logger.log("No selection in "+sheetName+". Can only search first row of selected rows");
+      return null;
     }
     var row=selection.getActiveRange().getRow();
-    Logger.log("Selection starts at row "+row);
-    var value=results.getRange(row, uidCol+1 /* convert arr index to col number */).getValue();
-    Logger.log("User ID is "+value);
-    displayUser(value);
-  }
-
+    Logger.log("Selection in "+sheetName+" starts at row "+row);
+    // move column from arrayIndex to Column Number
+    var columnNumber=uidCol+1;
+    var value=sheet.getRange(row,columnNumber).getValue();
+    Logger.log("Selected "+columnHeader+" in "+sheetName+": "+value);
+    return value;
 }
+
+function displaySelectedUser(){
+  var activeSheet=SpreadsheetApp.getActiveSheet().getName();
+  
+  Logger.log("Searching Active sheet :"+activeSheet+" Otherwise will look in results, then users for a selected user");
+  
+  var resultsValue=getSelectedValue(RESULTS_SHEET_NAME,"User ID");
+  var registrationValue=getSelectedValue(REGISTRATION_SHEET_NAME,"UserID");
+  
+  // Default to the results sheet
+  var value=resultsValue;
+  if(value==null || (activeSheet==REGISTRATION_SHEET_NAME && registrationValue!=null)) value=registrationValue;
+  
+  if(isBlank(value)){
+    SpreadsheetApp.getUi().alert("No user row selected in results or registration sheet.");
+    return;
+  }
+  
+  displayUser(value);
+ }
+
 function displaySelectedRide(){
-  var ridCol=getResultHeaders().indexOf("Ride ID");
-  Logger.log("RID Column: "+ridCol);
-  if(ridCol>-1){
-    var results=SpreadsheetApp.getActive().getSheetByName(RESULTS_SHEET_NAME);
-    var selection=results.getSelection();
-    if(!selection){
-      Logger.log("No selection in sheet.");
-      return;
-    }
-    var row=selection.getActiveRange().getRow();
-    Logger.log("Selection starts at row "+row);
-    var value=results.getRange(row, ridCol+1 /* convert arr index to col number */).getValue();
-    Logger.log("Ride ID is "+value);
-    showRideDetails(value);
+  var resultValue=getSelectedValue(RESULTS_SHEET_NAME,"Ride ID");
+  var ridesValue=getSelectedValue(RIDES_SHEET_NAME,"ID");
+  var activeSheet=SpreadsheetApp.getActiveSheet().getName();
+
+  // default to results tab
+  var value=resultValue;
+  if(value==null || (activeSheet==RIDES_SHEET_NAME && ridesValue!=null)) 
+    value=ridesValue;
+    
+  if(isBlank(value)){
+     SpreadsheetApp.getUi().alert("No ride row selected in results or rides sheet.");
+     return;
   }
-  }
+  showRideDetails(value);
+}
 
 function showSidebarTools() {
   var tmpl = HtmlService.createTemplateFromFile('tools-sidebar.html').evaluate();

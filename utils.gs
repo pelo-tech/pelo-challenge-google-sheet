@@ -9,6 +9,10 @@ function setup(){
   ui.alert("Your session ID has been set to "+data.session_id+"\n Your User ID set to "+data.user_id);
 }
 
+function isBlank(str) {
+    return (!str || /^\s*$/.test(str));
+}
+
 function getDataAsObjects(sheet){
   var rows=sheet.getDataRange().getValues();
   var result=[];
