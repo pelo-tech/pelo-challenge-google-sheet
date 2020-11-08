@@ -31,14 +31,22 @@ function getUserProfile(username) {
 
 function getUserOverview(user_id){
   var event=eventStart("Get User Overview",user_id);
+  var data={};
+  var success=false;
+  try{
   var config=getConfigDetails();
   var peloton=config.peloton;
   
   var url=peloton.http_base +'/api/user/'+user_id+"/overview";
   var json= UrlFetchApp.fetch(url,peloton.http_options).getContentText();
   var data = JSON.parse(json);
+  success=true;
   console.log(data);
-  eventEnd(event,true);
+  } catch (x){
+    Logger.log("Error with getting overview for "+user_id+": "+x);
+    Logger.log(x);
+  }
+  eventEnd(event,success);
   return data;
 }
 
