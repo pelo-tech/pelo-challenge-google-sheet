@@ -124,6 +124,12 @@ var event=eventStart("PurgeWorkouts",ride_id+","+competition);
       rows_to_delete.push( i+1 /*row number not array idx*/);
       }
   }
+  if(rows_to_delete.length == rows.length-1) {
+    Logger.log("This is deleting all rows (except header). Just going to clear them out instead");
+    sheet.getRange(2,1,rows_to_delete.length, cols.length).clear();    
+    eventEnd(event, "CLEARED:" +rows_to_delete.length);
+    return;
+  }
   // reverse sort, to delete from bottom up
   rows_to_delete.sort(function(a, b){return b-a});
   rows_to_delete.forEach(function(val){ sheet.deleteRow(val);});
