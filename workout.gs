@@ -20,6 +20,10 @@ function getRecentFollowingWorkouts(ride_id, page, limit){
   result.data.map(workout => {
   
        // Get latest ride count for a user  to get info on impending milestone
+        if(workout.status  && workout.status=="IN_PROGRESS"){
+          Logger.log("Ignoring incomplete workout: "+workout.id +"//"+workout.user.username+"//"+workout.status);
+          return;
+        }
         var rides=0;
         if(workout.user && workout.user.workout_counts){
           workout.user.workout_counts.forEach(obj=>{ if(obj.name=='Cycling') rides=obj.count; });
@@ -212,8 +216,9 @@ function dedupeUsersWithMultipleRides(ride_id,competition){
     var workout=workouts[i];
 
     // Is this in scope at all?
-    if(workout["Ride ID"]!=ride_id && (competition!=null && workout["Competition"] !=competition)){
+    if(workout["Ride ID"]!=ride_id || (competition!=null && workout["Competition"] !=competition)){
       // out of scope. 
+      Logger.log("Ignoring "+workout["Ride ID"] +" / "+workout["Competition"] +" as not in scope.");
       continue;
     }
     // Lets get the row number... We have to add on the extra header row, and then +1 to adjust off Array
@@ -236,12 +241,12 @@ function dedupeUsersWithMultipleRides(ride_id,competition){
         // We have a zero output workout that would clobber one with output
         // Let's keep the one with output
         rows_to_delete.push(workout.row);
-        Logger.log("Ignoring zero output row "+workout.row+" since it will clobber existing output workout for user "+user_workouts[uid]["Username"]);
+        Logger.log("Ignoring zero output row "+workout.row+" since it will clobber existing output workout "+user_workouts[uid].row+": "+JSON.stringify(user_workouts[uid]));
       }
       
       else if(user_workouts[uid]["Date"].getTime()<= workout["Date"].getTime()){
       // We now have a nonzero workout, or they're both zero. Let's keep the latest
-          Logger.log("Deleting older ride: row "+user_workouts[uid].row);
+          Logger.log("Deleting older ride: row "+user_workouts[uid].row+": "+JSON.stringify(user_workouts[uid]));
           rows_to_delete.push(user_workouts[uid].row);
           user_workouts[uid]=workout;
     }
