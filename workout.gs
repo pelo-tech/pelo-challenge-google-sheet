@@ -336,6 +336,7 @@ function loadAllWorkoutsForRide(ride_id, competition, last_workout_id){
     row.push(workout.bufferring)
     row.push(workout.bufferingv2);
     row.push(competition);
+    row.push(new Date());
     rows.push(row);
   });
   
