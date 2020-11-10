@@ -13,8 +13,9 @@ function isBlank(str) {
     return (!str || /^\s*$/.test(str));
 }
 
-function getDataAsObjects(sheet){
-  var rows=sheet.getDataRange().getValues();
+function getDataAsObjects(sheet, range){
+  if(!range || range==null) range=sheet.getDataRange();
+  var rows=range.getValues();
   var result=[];
   if(rows.length>1){
     var fields=rows[0];

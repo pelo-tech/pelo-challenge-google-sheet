@@ -2,7 +2,7 @@ function getRecentFollowingWorkouts(ride_id, page, limit){
   var config=getConfigDetails();
   var peloton=config.peloton;
   
-  var url=peloton.http_base +'/api/ride/'+ride_id+"/recent_following_workouts?sort_by=id&joins=user&limit="+limit+"&page="+page;
+  var url=peloton.http_base +'/api/ride/'+ride_id+"/recent_following_workouts?sort_by=-created&joins=user&limit="+limit+"&page="+page;
   var json= UrlFetchApp.fetch(url,peloton.http_options).getContentText();
   var result = JSON.parse(json);
   
@@ -51,28 +51,44 @@ function getRecentFollowingWorkouts(ride_id, page, limit){
   return page;
 }
 
-function getRecentFollowingWorkoutsForClass(ride_id, days_ago){
+function getRecentFollowingWorkoutsForClass(ride_id, days_ago, latest_workout_id){
 var event=eventStart("Get Following Workouts",ride_id +", max "+days_ago+"d ago");
   var all_workouts={};
   var done=false;
   var page=0;
-  var page_size=20;
+  var page_size=200;
   var cutoff=new Date().getTime()-(days_ago * 24*60*60*1000);
   while(!done){
+    // Get Page of workouts
     var results=getRecentFollowingWorkouts(ride_id, page, page_size);
-    Logger.log("Loading page "+page);
-    results.workouts.map(workout => {
-                         var user=workout.user_id;
-                         if(!all_workouts[user] || all_workouts[user].start_time.getTime() < workout.start_time.getTime()){
-      if(workout.start_time.getTime()> cutoff){
-                Logger.log("Adding eligible ride by "+workout.username+" from "+workout.start_time);
-                               all_workouts[user]=workout;
+    
+    // Sort in date reverse order, to stop once we see the ID of our latest workout
+    var workouts=results.workouts.sort((a,b)=>{ /*reverse*/ return b.start_time.getTime()-a.start_time.getTime();});
+    
+    Logger.log("Processing page "+page);
+    for(var i=0;!done && i<workouts.length;++i){
+      var workout=workouts[i];
+      if(latest_workout_id!=null && workout.id === latest_workout_id){
+          Logger.log("Found ID Cutoff workout ["+latest_workout_id+"] Ignoring this ["+workout.id+"/"+workout.username+"/"+workout.start_time+"] and earlier ones");
+          done=true; 
+          break;
+      } else if(workout.start_time.getTime()<cutoff) {
+          Logger.log("Found Time Cutoff workout earlier than ["+new Date(cutoff)+"] Ignoring this ["+workout.id+"/"+workout.username+"/"+workout.start_time+"] and earlier ones");
+          done=true;
+          break;
       } else {
-        Logger.log("Ignoring ineligible ride by "+workout.username+" from "+workout.start_time);
+           var user=workout.user_id;
+           if(!all_workouts[user] || all_workouts[user].start_time.getTime() < workout.start_time.getTime()){
+              Logger.log("Adding eligible ride by "+workout.username+" from "+workout.start_time);
+              all_workouts[user]=workout;
+           } else {
+             Logger.log("Ignoring ineligible ride (Have a later one from this user):"+["+workout.id+"/"+workout.username+"/"+workout.start_time+"]);
+           }
       }
-                             }
-                         });
-  Logger.log("Show Next :"+results.show_next+"; total pages "+results.page_count);
+      
+    }
+
+    Logger.log("Show Next :"+results.show_next+"; total pages "+results.page_count);
     if(!results.show_next || page==(results.page_count-1)){
       done=true;
     } else {
@@ -80,9 +96,10 @@ var event=eventStart("Get Following Workouts",ride_id +", max "+days_ago+"d ago"
     }
   }
 
- var arr=Object.values(all_workouts);
- eventEnd(event,arr.length);
-return arr;
+  var arr=Object.values(all_workouts);
+  eventEnd(event,arr.length);
+  // Return Workouts in Proper Date Order
+  return arr.sort((a,b)=>{ return a.start_time-b.start_time;});
 }
 
 function testFollowingWorkouts(){
@@ -124,7 +141,7 @@ var event=eventStart("PurgeWorkouts",ride_id+","+competition);
       rows_to_delete.push( i+1 /*row number not array idx*/);
       }
   }
-  if(rows_to_delete.length == rows.length-1) {
+  if(rows_to_delete.length > 0 && rows_to_delete.length == rows.length-1) {
     Logger.log("This is deleting all rows (except header). Just going to clear them out instead");
     sheet.getRange(2,1,rows_to_delete.length, cols.length).clear();    
     eventEnd(event, "CLEARED:" +rows_to_delete.length);
@@ -137,16 +154,126 @@ var event=eventStart("PurgeWorkouts",ride_id+","+competition);
   eventEnd(event, rows_to_delete.length);
 }
 
-function loadAllWorkoutsForRide(ride_id, competition){
+function testLatestSaved(){
+var id="ecdb59c419964cb1818558b4b820a110";
+var competition="RTW Week 1";
+  var workoutID=getLatestSavedWorkoutIDForRide(id,competition);
+  Logger.log("Workout found: "+workoutID);
+  var workouts=getRecentFollowingWorkoutsForClass(id, 14, workoutID);
+  Logger.log("Workouts After == "+workouts.length);
+  if(workouts.length>0){
+    Logger.log("First workout="+workouts[0].start_time);
+    Logger.log("Last workout="+workouts[workouts.length-1].start_time);
+  }
+}
+
+function testDedupeRides(){
+  var id="ecdb59c419964cb1818558b4b820a110";
+  var competition="RTW Week 1";
+  dedupeUsersWithMultipleRides(id,competition);
+}
+
+function getLatestSavedWorkoutIDForRide(ride_id, competition){
+  var event=eventStart("Get Last Saved Workout", ride_id+","+competition);
+  var sheet=SpreadsheetApp.getActiveSpreadsheet().getSheetByName(RESULTS_SHEET_NAME);
+  var workouts=getDataAsObjects(sheet);
+  Logger.log("Get Workouts for ride "+ride_id +" out of total of "+workouts.length+" workouts");
+  // Just get these workouts
+  var workouts_for_ride=workouts.filter((workout)=>{ return workout["Ride ID"]==ride_id && (competition!=null && workout["Competition"]==competition); });
+  Logger.log("Got "+ workouts_for_ride.length +" workouts for ride "+ride_id +"/"+competition+" out of total of "+workouts.length+" workouts");
+
+  // Now sort by date
+  var sorted=workouts_for_ride.sort((a,b)=>{ return a["Date"].getTime()-b["Date"].getTime()});
+  if(sorted.length>0){
+    Logger.log("Sorted. Earliest is "+sorted[0]["Date"]);
+    Logger.log("Sorted. Latest is "+sorted[sorted.length-1]["Date"]);
+    eventEnd(event,sorted[sorted.length-1]["Workout ID"]+" out of "+sorted.length);
+    return sorted[sorted.length-1]["Workout ID"];
+  } else {
+    Logger.log("No rides found");
+    eventEnd(event, "No rides found");
+    return null;
+  }
+}
+
+/****
+ if we do an incremental load with existing user rides already in the sheet, 
+ we will need to delete the earlier entries for a given user to count their latest entry by date with more than zero output
+ To do this we get all rides for a given competition/Ride ID and find rows to delete
+***/
+function dedupeUsersWithMultipleRides(ride_id,competition){
+  var event=eventStart("Dedupe Users", ride_id+","+competition);
+  var sheet=SpreadsheetApp.getActiveSpreadsheet().getSheetByName(RESULTS_SHEET_NAME);
+  var workouts=getDataAsObjects(sheet);
+  var user_workouts={};
+  var rows_to_delete=[];
+  Logger.log("Deduping users for "+ride_id+"/"+competition+" out of the total sheet of "+workouts.length+" workouts");
+  for(var i=0; i<workouts.length;++i){
+    var workout=workouts[i];
+
+    // Is this in scope at all?
+    if(workout["Ride ID"]!=ride_id && (competition!=null && workout["Competition"] !=competition)){
+      // out of scope. 
+      continue;
+    }
+    // Lets get the row number... We have to add on the extra header row, and then +1 to adjust off Array
+    workout.row=i+2;
+    var uid=workouts[i]["User ID"];
+    if(!user_workouts[uid]) { 
+      Logger.log("First workout for "+uid);
+      // first time seeing this user workout
+      user_workouts[uid]=workout ;
+    } else {
+      Logger.log("We have an existing workout for this user: "+uid);
+      // We have an existing workout. which do we keep, and which do we delete?
+      
+      if(workout["Workout ID"]==user_workouts[uid]["Workout ID"]){
+        // duplicate row. Just delete the new one
+        rows_to_delete.push(workout.row);  
+        Logger.log("Deleting duplicate row "+workout.row+" for workout "+workout["Workout ID"]);
+      
+      } else  if(workout["Output"]==0 && user_workouts[uid]["Output"]>0){
+        // We have a zero output workout that would clobber one with output
+        // Let's keep the one with output
+        rows_to_delete.push(workout.row);
+        Logger.log("Ignoring zero output row "+workout.row+" since it will clobber existing output workout for user "+user_workouts[uid]["Username"]);
+      }
+      
+      else if(user_workouts[uid]["Date"].getTime()<= workout["Date"].getTime()){
+      // We now have a nonzero workout, or they're both zero. Let's keep the latest
+          Logger.log("Deleting older ride: row "+user_workouts[uid].row);
+          rows_to_delete.push(user_workouts[uid].row);
+          user_workouts[uid]=workout;
+    }
+    
+  }
+ }
+  Logger.log("Total rows to delete: "+JSON.stringify(rows_to_delete));
+  var sortedReverse=rows_to_delete.sort((a,b)=>{ return b-a});
+  sortedReverse.forEach(row=>{
+    sheet.deleteRow(row);
+  });
+  eventEnd(event,rows_to_delete.length);
+}
+
+
+function loadAllWorkoutsForRide(ride_id, competition, last_workout_id){
  var config=getConfigDetails();
  var event=eventStart("Load All Workouts",ride_id +","+competition);
 
   var ride=getRide(ride_id);
   var days=config.peloton.eligible_ride_age;
-  var workouts=getRecentFollowingWorkoutsForClass(ride_id, days);
+  var purge=true;
+  if(last_workout_id != null){
+    Logger.log("Last Workout ID specified. Will use this as a cutoff to load incremental results. Not purging");
+    purge=false;
+  }
+  var workouts=getRecentFollowingWorkoutsForClass(ride_id, days, last_workout_id);
   Logger.log("Got "+workouts.length+" workouts performed on "+ride.title+" by "+ride.instructor.name);
-  Logger.log("Purging any existing workouts on this ride (competition="+competition+")");
-  purgeWorkouts(ride.id, competition);
+  if(purge){
+    Logger.log("Purging any existing workouts on this ride (competition="+competition+")");
+    purgeWorkouts(ride.id, competition);
+  }
   var sheet=SpreadsheetApp.getActiveSpreadsheet().getSheetByName(RESULTS_SHEET_NAME);
   var lastRow=sheet.getLastRow();
   var rows=[];
@@ -212,7 +339,7 @@ function loadAllWorkoutsForRide(ride_id, competition){
   }
   
    storeRide(ride, competition, workouts?workouts.length:0);
-   
+   dedupeUsersWithMultipleRides(ride,competition);
    eventEnd(event,workouts&& workouts.length?workouts.length : 0);
    return workouts;
 }
