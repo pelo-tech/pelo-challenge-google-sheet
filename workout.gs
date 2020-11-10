@@ -344,7 +344,7 @@ function loadAllWorkoutsForRide(ride_id, competition, last_workout_id){
   }
   
    storeRide(ride, competition, workouts?workouts.length:0);
-   dedupeUsersWithMultipleRides(ride,competition);
+   dedupeUsersWithMultipleRides(ride_id,competition);
    eventEnd(event,workouts&& workouts.length?workouts.length : 0);
    return workouts;
 }
