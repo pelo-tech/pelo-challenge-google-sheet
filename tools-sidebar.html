@@ -17,7 +17,7 @@ angular.module('pelotonApp', [])
   .controller('PelotonUserController', function($scope, $httpParamSerializer) {
     var pelotonController = this;
     pelotonController.loading=false;
-   
+     
     
  pelotonController.displayResultsSheet=function(){
      google.script.run.displayResultsSheet();
@@ -33,6 +33,22 @@ angular.module('pelotonApp', [])
        google.script.run.displaySelectedUser();
     };
     
+     
+  
+      
+    pelotonController.incrementalPull=function(){
+        if(!window.confirm("Are you sure you want to load? This could take 2-3 minutes. Look at system log for progress")) return;
+         pelotonController.loading=true;
+        google.script.run.withSuccessHandler(function(result){ 
+          if(result){
+          pelotonController.loading=false;
+          $scope.$digest();          
+          if(result.competition)
+            alert("Loaded a total of "+result.workouts +"workouts from "+result.rides+"rides in "+ result.competition.Name);
+          else alert("No active event found");
+        }
+      }).incrementallyPullLatestCompetition();
+    };
     
   });
 </script>
@@ -49,6 +65,12 @@ angular.module('pelotonApp', [])
 
      <br><br>
               <button  ng-click="peloton.displaySelectedRide()" class="badge badge-pill badge-secondary">Display Selected Ride</button>
+              
+              
+      <br><br>
+              <button  ng-disabled="peloton.loading" ng-click="peloton.incrementalPull()" class="badge badge-pill badge-secondary">Incrementally Pull Latest week</button>
+              <div   ng-if="peloton.loading"  style="text-align:center"> <i  class="fa fa-circle-o-notch fa-spin fa-3x fa-fw"></i></div>
+              <br/><small class="danger">This could take 2-3 minutes. Please be looking at System Log for progress. Note that right now rides are capped at the Days-old (see config tab), not week boundries. This will be fixed in due time </small>
 
    </div>
    <div class="card-footer">

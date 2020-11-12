@@ -55,12 +55,12 @@ function getRecentFollowingWorkouts(ride_id, page, limit){
   return page;
 }
 
-function getRecentFollowingWorkoutsForClass(ride_id, days_ago, latest_workout_id){
-var event=eventStart("Get Following Workouts",ride_id +", max "+days_ago+"d ago");
+function getRecentFollowingWorkoutsForClass(ride_id, days_ago, latest_workout_id, page_size){
+var event=eventStart("Get Following Workouts",ride_id +", max "+days_ago+"d ago, lastID="+latest_workout_id+",PgSz="+page_size);
   var all_workouts={};
   var done=false;
   var page=0;
-  var page_size=200;
+  if(!page_size || page_size==0) page_size=200;
   var cutoff=new Date().getTime()-(days_ago * 24*60*60*1000);
   while(!done){
     // Get Page of workouts
@@ -262,9 +262,9 @@ function dedupeUsersWithMultipleRides(ride_id,competition){
 }
 
 
-function loadAllWorkoutsForRide(ride_id, competition, last_workout_id){
+function loadAllWorkoutsForRide(ride_id, competition, last_workout_id, page_size){
  var config=getConfigDetails();
- var event=eventStart("Load All Workouts",ride_id +","+competition);
+ var event=eventStart("Load All Workouts",ride_id +","+competition+",Last="+last_workout_id+", PageSize="+page_size);
 
   var ride=getRide(ride_id);
   var days=config.peloton.eligible_ride_age;
@@ -273,7 +273,7 @@ function loadAllWorkoutsForRide(ride_id, competition, last_workout_id){
     Logger.log("Last Workout ID specified. Will use this as a cutoff to load incremental results. Not purging");
     purge=false;
   }
-  var workouts=getRecentFollowingWorkoutsForClass(ride_id, days, last_workout_id);
+  var workouts=getRecentFollowingWorkoutsForClass(ride_id, days, last_workout_id, page_size);
   Logger.log("Got "+workouts.length+" workouts performed on "+ride.title+" by "+ride.instructor.name);
   if(purge){
     Logger.log("Purging any existing workouts on this ride (competition="+competition+")");
