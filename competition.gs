@@ -4,26 +4,20 @@ function getCompetitions(){
 }
 
 function testGetRidesForLatestCompetition(){
-  var competition=getActiveCompetition();
+  var competitions=getActiveCompetitions();
+  var competition=(competitions.length>0?competitions[0].Name:null);
   if(competition){
-   getRidesForCompetition(competition.Name);
-   }
+   getRidesForCompetition(competitiom);
+  }
 
 }
 
-function getActiveCompetition(){
+function getActiveCompetitions(){
  var now=new Date().getTime();
   var competitions=getCompetitions()
     .filter(c=>{ return now>=c.Start.getTime() &&now < c.End.getTime()})
     .sort((a,b)=>{return a.Start.getTime()-b.Start.getTime();});
-  if(competitions.length){
-    Logger.log("Currently in competition: "+JSON.stringify(competitions[0]));
-    return competitions[0];
-  }
-  else {
-    Logger.log("Not in an active competition");
-    return null;
-  }
+  return competitions;
 }
 
 function getRidesForCompetition(competitionName){
@@ -43,15 +37,21 @@ function getRidesForCompetition(competitionName){
 
 
 function incrementallyPullLatestCompetition(){
+ var competitions=getActiveCompetitions();
+ var competition=(competitions.length>0?competitions[0].Name:null);
+ incrementallyPullRidesForCompetition(competition);
+}
+
+function incrementallyPullRidesForCompetition(competition){
+
   var result={competition:null, rides:0, workouts:0, error:null};
   var page_size="50";
-  var event=eventStart("IncrementalPullCompetition","PageSize="+page_size);
-  var competition=getActiveCompetition();
-   
+  var event=eventStart("IncrementalPullCompetition",competition+", PageSize="+page_size);
+    
   if(competition){
     result.competition=competition;
-    
-    var rides=getRidesForCompetition(competition.Name);
+    Logger.log("Currently in competition: "+competition);
+    var rides=getRidesForCompetition(competition);
 
     if(rides){
       result.rides=rides.length;
@@ -59,19 +59,19 @@ function incrementallyPullLatestCompetition(){
       rides.forEach(ride=>{
         Logger.log("Loading Incremental Results for ride:" +ride.ID+" ("+ride.Title+" "+ride.Instructor+" "+ride["Originally Aired"]+")");
         
-        var workouts=loadRaceResults(ride.ID,competition.Name, true, page_size);
+        var workouts=loadRaceResults(ride.ID,competition, true, page_size);
         
         if(workouts) 
           result.workouts+=workouts.length;
           
-        Logger.log("Loaded race results incrementally for "+competition.Name+" - Total found="+(workouts?workouts.length:-1));
+        Logger.log("Loaded race results incrementally for "+competition+" - Total found="+(workouts?workouts.length:-1));
       });
       
-      eventEnd(event,result.workouts+" workouts, "+result.rides+" rides, "+competition.Name);
+      eventEnd(event,result.workouts+" workouts, "+result.rides+" rides, "+competition);
       
     } else {
-      result.error="No rides were found for "+competition.Name;
-      eventEnd(event,"0, No rides found for "+competition.Name);
+      result.error="No rides were found for "+competition;
+      eventEnd(event,"0, No rides found for "+competition);
     }
   } else {
     result.error="No competition was found";
@@ -82,9 +82,17 @@ function incrementallyPullLatestCompetition(){
    return JSON.parse(JSON.stringify(result));
 }
 
-function incrementallyPullLatestUserRides(){
-  var competition=getActiveCompetition();
-  // get all registrations after the start of latest competition
+function refreshUserForCompetition(userId, competition){
+  /*var result={competition:null, rides:0, workouts:0, error:null};
+  var page_size="50";
+  var event=eventStart("refreshUserForCompetition",userId+", "+competition);
+  if(competition){
+      result.competition=competition;
+      Logger.log("Currently in competition: "+competition);
+      var rides=getRidesForCompetition(competition);
+      
+  }
+   // get all registrations after the start of latest competition
   // if size > X - purge all rides and do a full reload
   // else for each user
   // LOAD USER COMPETITION RIDES (purge optional)
@@ -93,5 +101,6 @@ function incrementallyPullLatestUserRides(){
   // if !purge
   // compare list of global workouts, and add any missing
   // else Purge any existing and readd all
+  */
   
 }
