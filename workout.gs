@@ -220,9 +220,7 @@ function dedupeUsersWithMultipleRides(ride_id,competition){
       // out of scope. 
       Logger.log("Ignoring "+workout["Ride ID"] +" / "+workout["Competition"] +" as not in scope.");
       continue;
-    }
-    // Lets get the row number... We have to add on the extra header row, and then +1 to adjust off Array
-    workout.row=i+2;
+    }   
     var uid=workouts[i]["User ID"];
     if(!user_workouts[uid]) { 
       Logger.log("First workout for "+uid);
@@ -234,20 +232,20 @@ function dedupeUsersWithMultipleRides(ride_id,competition){
       
       if(workout["Workout ID"]==user_workouts[uid]["Workout ID"]){
         // duplicate row. Just delete the new one
-        rows_to_delete.push(workout.row);  
-        Logger.log("Deleting duplicate row "+workout.row+" for workout "+workout["Workout ID"]);
+        rows_to_delete.push(workout._row);  
+        Logger.log("Deleting duplicate row "+workout._row+" for workout "+workout["Workout ID"]);
       
       } else  if(workout["Output"]==0 && user_workouts[uid]["Output"]>0){
         // We have a zero output workout that would clobber one with output
         // Let's keep the one with output
-        rows_to_delete.push(workout.row);
-        Logger.log("Ignoring zero output row "+workout.row+" since it will clobber existing output workout "+user_workouts[uid].row+": "+JSON.stringify(user_workouts[uid]));
+        rows_to_delete.push(workout._row);
+        Logger.log("Ignoring zero output row "+workout._row+" since it will clobber existing output workout "+user_workouts[uid]._row+": "+JSON.stringify(user_workouts[uid]));
       }
       
       else if(user_workouts[uid]["Date"].getTime()<= workout["Date"].getTime()){
       // We now have a nonzero workout, or they're both zero. Let's keep the latest
-          Logger.log("Deleting older ride: row "+user_workouts[uid].row+": "+JSON.stringify(user_workouts[uid]));
-          rows_to_delete.push(user_workouts[uid].row);
+          Logger.log("Deleting older ride: row "+user_workouts[uid]._row+": "+JSON.stringify(user_workouts[uid]));
+          rows_to_delete.push(user_workouts[uid]._row);
           user_workouts[uid]=workout;
     }
     
@@ -337,6 +335,10 @@ function loadAllWorkoutsForRide(ride_id, competition, last_workout_id, page_size
     row.push(workout.bufferingv2);
     row.push(competition);
     row.push(new Date());
+    
+    if(dataSettings.results_join2_col && dataSettings.join2_sheet_name){
+        row.push("=VLOOKUP(LOWER(INDIRECT(CONCAT(\""+dataSettings.results_join2_col+"\",ROW()))),'"+dataSettings.join2_sheet_name+"'!"+dataSettings.join2_range+","+dataSettings.join2_col1_column+",false)");
+    }
     rows.push(row);
   });
   

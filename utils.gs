@@ -24,6 +24,8 @@ function getDataAsObjects(sheet, range){
       for(var col=0; col<fields.length;++col){  
         obj[fields[col]]=rows[row][col];
       }
+      // row number in google sheets (1-based)
+      obj._row=1+row;
       result.push(obj);
     }
   } 
@@ -110,7 +112,14 @@ function getConfigDetails(){
      col2_name:cfg.getRange(DATA_JOIN_COL2_NAME_CELL).getValue(),
      col2_column:cfg.getRange(DATA_JOIN_COL2_COLUMN_CELL).getValue(),
      col3_name:cfg.getRange(DATA_JOIN_COL3_NAME_CELL).getValue(),
-     col3_column:cfg.getRange(DATA_JOIN_COL3_COLUMN_CELL).getValue()
+     col3_column:cfg.getRange(DATA_JOIN_COL3_COLUMN_CELL).getValue(),
+     
+     results_join2_col:cfg.getRange(DATA_RESULTS_JOIN2_COL).getValue(),
+     join2_sheet_name:cfg.getRange(DATA_JOIN2_SHEETNAME_CELL).getValue(),
+     join2_range:cfg.getRange(DATA_JOIN2_RANGE_CELL).getValue(),
+     join2_col1_column:cfg.getRange(DATA_JOIN2_COL1_COLUMN_CELL).getValue(),
+     join2_col1_name:cfg.getRange(DATA_JOIN2_COL1_NAME_CELL).getValue()
+     
   };
 
   return { 
