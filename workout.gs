@@ -1,8 +1,14 @@
 function getRecentFollowingWorkouts(ride_id, page, limit){
+  var peloton=getConfigDetails().peloton;
+  var url=peloton.http_base +'/api/ride/'+ride_id+"/recent_following_workouts?sort_by=-created&joins=user&limit="+limit+"&page="+page;
+  return getWorkoutsPage(url);
+}
+
+function getWorkoutsPage(url){
+
   var config=getConfigDetails();
   var peloton=config.peloton;
   
-  var url=peloton.http_base +'/api/ride/'+ride_id+"/recent_following_workouts?sort_by=-created&joins=user&limit="+limit+"&page="+page;
   var json= UrlFetchApp.fetch(url,peloton.http_options).getContentText();
   var result = JSON.parse(json);
   
@@ -30,7 +36,9 @@ function getRecentFollowingWorkouts(ride_id, page, limit){
         }
         
                   page.workouts.push({
-                   
+                  // This won't always be there - depends if we join with ride
+                  ride:workout.ride, 
+                  
                   id: workout.id,
                   pr: workout.is_total_work_personal_record,
                   output: workout.total_work/1000,
@@ -257,8 +265,17 @@ function dedupeUsersWithMultipleRides(ride_id,competition){
     sheet.deleteRow(row);
   });
   eventEnd(event,rows_to_delete.length);
+  return rows_to_delete.length;
 }
 
+
+function appendWorkoutRows(rows){
+  var sheet=SpreadsheetApp.getActiveSpreadsheet().getSheetByName(RESULTS_SHEET_NAME);
+  var lastRow=sheet.getLastRow();
+  if(rows.length>0){
+    sheet.getRange(lastRow+1, 1, rows.length, rows[0].length).setValues(rows);
+  }
+}
 
 function loadAllWorkoutsForRide(ride_id, competition, last_workout_id, page_size){
  var config=getConfigDetails();
@@ -277,10 +294,27 @@ function loadAllWorkoutsForRide(ride_id, competition, last_workout_id, page_size
     Logger.log("Purging any existing workouts on this ride (competition="+competition+")");
     purgeWorkouts(ride.id, competition);
   }
-  var sheet=SpreadsheetApp.getActiveSpreadsheet().getSheetByName(RESULTS_SHEET_NAME);
-  var lastRow=sheet.getLastRow();
-  var rows=[];
-  if(workouts)
+
+  
+  // we will sometimes join the workouts and rides, but here we wont since its always the same ride
+  if(workouts) workouts.forEach(workout=>{workout.ride=ride});
+  var rows=getWorkoutDetailRows(workouts, competition);
+  
+  if(workouts && workouts.length){
+    appendWorkoutRows(rows);
+  }
+  
+   storeRide(ride, competition, workouts?workouts.length:0);
+   dedupeUsersWithMultipleRides(ride_id,competition);
+   eventEnd(event,workouts&& workouts.length?workouts.length : 0);
+   return workouts;
+}
+
+function getWorkoutDetailRows(workouts, competition){
+ var event=eventStart("getWorkoutDetailRows",workouts?workouts.length:-1+","+competition);
+ var config=getConfigDetails();
+ var rows=[]; 
+ if(workouts)
    workouts.forEach(function(workout){
     var row=[
       workout.id,
@@ -289,11 +323,11 @@ function loadAllWorkoutsForRide(ride_id, competition, last_workout_id, page_size
       workout.user_location,
       workout.pr,
       workout.output,
-      ride.instructor.name,
-      ride.title,
-      ride.duration / 60,
-      ride.aired,
-      ride.id,
+      workout.ride.instructor.name,
+      workout.ride.title,
+      workout.ride.duration / 60,
+      workout.ride.aired? workout.ride.aired:new Date(workout.ride.original_air_time * 1000),
+      workout.ride.id,
       workout.user_id,
       workout.timezone,
       workout.platform,
@@ -341,17 +375,10 @@ function loadAllWorkoutsForRide(ride_id, competition, last_workout_id, page_size
     }
     rows.push(row);
   });
-  
-  if(workouts && workouts.length){
-    sheet.getRange(lastRow+1, 1, workouts.length, rows[0].length).setValues(rows);
-  }
-  
-   storeRide(ride, competition, workouts?workouts.length:0);
-   dedupeUsersWithMultipleRides(ride_id,competition);
-   eventEnd(event,workouts&& workouts.length?workouts.length : 0);
-   return workouts;
-}
+  return rows;
+  eventEnd(event,rows.length);
 
+}
 function testGetFullWorkoutData(){
  var data=getFullWorkoutData('604cb344c20f46529c78e0e47a8be0fe');
  Logger.log(JSON.stringify(data));

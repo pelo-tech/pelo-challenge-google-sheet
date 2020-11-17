@@ -82,12 +82,12 @@ function incrementallyPullRidesForCompetition(competition){
    return JSON.parse(JSON.stringify(result));
 }
 
-function testGetWorkoutsForUserInCompetition(){
-  var workouts=getWorkoutsForUserInCompetition("b3f902e4b6c54777a73b61471ebed471", "RTW Week 1");
+function testGetExistingWorkoutsForUserInCompetition(){
+  var workouts=getExistingWorkoutsForUserInCompetition("b3f902e4b6c54777a73b61471ebed471", "RTW Week 1");
   Logger.log(JSON.stringify(workouts));
 }
 
-function getWorkoutsForUserInCompetition(userId, competition){
+function getExistingWorkoutsForUserInCompetition(userId, competition){
   var event=eventStart("GetWorkoutsForUserInCompetition",userId+","+competition);
   var resultsSheet=SpreadsheetApp.getActive().getSheetByName(RESULTS_SHEET_NAME);
   var workouts=getDataAsObjects(resultsSheet);
@@ -98,35 +98,69 @@ function getWorkoutsForUserInCompetition(userId, competition){
   return results;
 }
 
-function refreshUserForCompetition(userId, competition){
+function testGetWorkoutsForUserOnRides(){
+  var rides=[];
+  var allRides=getRidesForCompetition("RTW Week 2");
+  allRides.forEach(ride=>{rides.push(ride.ID);});
+  
+  var result=getWorkoutsForUserOnRides("b3f902e4b6c54777a73b61471ebed471",rides);
+  Logger.log("Found "+result.length+" workouts for "+rides.length+" rides");
+  result.forEach(workout=>{
+    Logger.log("Result: "+workout.username +" , "+workout.ride.title+","+workout.id);
+  });
+  //Logger.log(result);
+}
+function getWorkoutsForUserOnRides(user_id,rides){
+  
+  var peloton=getConfigDetails().peloton;
+  var limit=50;
+  var page=0;
+  var url=peloton.http_base +'/api/user/'+user_id+"/workouts?sort_by=-created&joins=user,ride,ride.instructor&limit="+limit+"&page="+page;
+  Logger.log(url);
+  var result= getWorkoutsPage(url);
+  if(result && result.workouts && result.workouts.length>0){
+    return result.workouts.filter(workout=> rides.indexOf(workout.ride.id)>-1);
+  }
+  else {
+    return [];
+  }
+}
+function refreshUserForCompetition(userId, competition , prompt){
   if(!competition) return;
+  if(prompt){
+    SpreadsheetApp.getUi().alert("Refreshing user "+userId+ " for event "+competition);
+  }
   var result={competition:competition, rides: 0, workouts:0, purged:0};
   var event=eventStart("refreshUserForCompetition",userId+", "+competition);
   
-  var rideSet={};
+  var rideSet=[];
   Logger.log("Currently in competition: "+competition);
   var rides=getRidesForCompetition(competition);
   rides.forEach(ride=>{rideSet.push(ride.ID);});
   result.rides=rides.length;
   
-  // Get all user workouts
-  var workouts=getWorkoutsForUserInCompetition(userId, competition);
-  Logger.log("User did "+workouts.length+" workouts in this competition: "+competition);
-  Logger.log(JSON.stringify(workouts));
   
   
-  /*
-  // Now can check rideSet on each workout found
+  // Get user workouts for each ride, and if scope append them to the workout set
+  var workouts=getWorkoutsForUserOnRides(userId, rideSet);
+  Logger.log("Found a total of "+workouts.length +" workouts for user "+userId +" in "+rideSet.length+" rides in "+competition);
   
-   // get all registrations after the start of latest competition
-  // if size > X - purge all rides and do a full reload
-  // else for each user
-  // LOAD USER COMPETITION RIDES (purge optional)
-  //  get their ride history going back to start of competition
-  //. get list of workouts in scope for competition
-  // if !purge
-  // compare list of global workouts, and add any missing
-  // else Purge any existing and readd all
-  */
+  var rows=getWorkoutDetailRows(workouts, competition);
+  Logger.log("Got a total of "+rows.length+" results to append");
+
+  // append to bototm of results
+  appendWorkoutRows(rows);
+
+  var dupes=0;
+  // Dedupe each ride
+  rideSet.forEach(rideID=>{
+    dupes+=dedupeUsersWithMultipleRides(rideID,competition);
+  });
+  Logger.log("Deduped a total of "+dupes+" duplicates after inserting a total of "+rows.length+" rows for a net total of ");
   
+  eventEnd("Inserted: "+rows.length+", Dupes: "+dupes);
+  if(prompt){
+    SpreadsheetApp.getUi().alert("Refreshed user "+userId+ " for event "+competition+" Inserted "+rows.length+" rows, of which "+dupes+" were duplicates");
+  }
+  return rows.length-dupes;
 }

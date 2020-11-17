@@ -17,7 +17,17 @@ angular.module('pelotonApp', [])
     var userController = this;
     userController.profile=JSON.parse("<?=  JSON.stringify(getUserProfile(user_id)) ?>");
     userController.overview=JSON.parse("<?=  JSON.stringify(getUserOverview(user_id)) ?>");
-    
+     userController.competitions=JSON.parse("<?= JSON.stringify(getCompetitions()) ?>");
+     
+     userController.refreshUserForRide=function(user_id){
+     if(userController.competition==null) {
+       alert("Please select a event. Add one to the competitions worksheet if it's missing");
+       return;
+     } else {
+       google.script.run.refreshUserForCompetition(user_id, userController.competition, true);
+       }
+     }
+     
        userController.followUser=function(user_id){
     var myUserId=user_id;
     google.script.run.withSuccessHandler(function(result){ 
@@ -53,7 +63,16 @@ angular.module('pelotonApp', [])
      <button ng-if="peloton.profile.relationship.me_to_user=='following'" ng-click="peloton.unfollowUser(peloton.profile.user_id)" class="badge badge-pill badge-secondary">Unfollow</button>
          <button ng-if="peloton.profile.relationship.me_to_user=='none'" ng-click="peloton.followUser(peloton.profile.user_id)" class="badge badge-pill badge-primary">Follow</button>
          <button ng-if="peloton.profile.relationship.me_to_user=='follow_pending'"  disabled="true"  class="badge badge-pill badge-secondary">Follow Requested</button>
-  </div>
+
+
+          <label for="competitionSelect"> Event (Required): </label>
+    <select name="competitionSelect" id="competitionSelect" ng-model="peloton.competition">
+      <option ng-repeat="comp in peloton.competitions |orderBy:'comp.Start.getTime()':reverse" value="{{comp.Name}}">{{comp.Name}}</option>
+    </select>
+             <button ng-if="peloton.competition!=null" ng-click="peloton.refreshUserForRide(peloton.profile.user_id)" class="badge badge-pill badge-secondary">Refresh User for Event</button>
+
+
+</div>
   <div class="card-body">
     
      <div class="container">
