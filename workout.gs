@@ -52,8 +52,8 @@ function getWorkoutsPage(url){
                   user_location: workout.user.location,
                   user_private: workout.user.is_profile_private,
                   user_rides: workout.user.total_pedaling_metric_workouts,
-                  bufferring: workout.total_video_buffering_seconds,
-                  bufferringv2: workout.v2_total_video_buffering_seconds,
+                  buffering: workout.total_video_buffering_seconds,
+                  bufferingv2: workout.v2_total_video_buffering_seconds,
                   total_rides:  rides
                  });               
              });
@@ -365,7 +365,7 @@ function getWorkoutDetailRows(workouts, competition){
           } else row.push(null);
     }
    
-    row.push(workout.bufferring)
+    row.push(workout.buffering)
     row.push(workout.bufferingv2);
     row.push(competition);
     row.push(new Date());
