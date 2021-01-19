@@ -21,6 +21,7 @@ function getUserProfile(username) {
     private:data.is_profile_private,
     rides: data.total_pedaling_metric_workouts,
     following_user: (data.relationship  && data.relationship.me_to_user =='following'),
+    follow_pending: (data.relationship  && data.relationship.me_to_user =='follow_pending'),
     user_following_me: ( data.relationship  &&  data.relationship.user_to_me =='following'),
     relationship: data.relationship
   };
@@ -152,4 +153,3 @@ function onChange(e){
     sheet.getRange("K"+e.range.rowStart).setValue(result.user_to_me);
   }
 }
-

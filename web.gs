@@ -29,9 +29,15 @@ function onFormSubmit(event){
       event.namedValues["AlreadyFollowing"]=[profile.following_user];
       
       // Check if Following the user, otherwise Follow
-      if(profile.following_user){
+      if(profile.follow_pending){
+        message+=" (Follow Pending)";
+        status="Follow Pending";
+        Logger.log("Follow Pending");
+        event.namedValues["AlreadyFollowing"]=["follow_pending"];
+      } else if(profile.following_user){
         message+=" (Already Following this user)";
         status="Already Following";
+        event.namedValues["AlreadyFollowing"]=["already_following"];
         Logger.log("Already Following");
       } else {
         // Try Following
@@ -41,14 +47,27 @@ function onFormSubmit(event){
             status = "Requested to follow: "+result.me_to_user;
             event.namedValues["AlreadyFollowing"]=[result.me_to_user];
          }  catch (x){
-           event.namedValues["AlreadyFollowing"]=["Error Following"];
            status="Error Following User";
+           event.namedValues["AlreadyFollowing"]=["error_following"];
            Logger.log("Error Following "+JSON.stringify(x));
            message+="Error Following user "+username+": "+JSON.stringify(x);
         }
       }
+
+      // pre populate FTP and PRs 
+        event.namedValues["FTP"]=[null];
+        event.namedValues["PR5 min"]=[null];
+        event.namedValues["PR10 min"]=[null];
+        event.namedValues["PR15 min"]=[null];
+        event.namedValues["PR20 min"]=[null];
+        event.namedValues["PR30 min"]=[null];
+        event.namedValues["PR45 min"]=[null];
+        event.namedValues["PR60 min"]=[null];
+        event.namedValues["PR75 min"]=[null];
+        event.namedValues["PR90 min"]=[null];
+
       // Load Additional User Data
-      if(profile.user_id){
+      if(profile.user_id && !profile.follow_pending){
         Logger.log("Trying to get FTP");
         var ftp=null;
           try{
@@ -66,16 +85,7 @@ function onFormSubmit(event){
          Logger.log("Failed to get user overview/PR list. Is user private? "+e);
          message+="| Cannot get user overview";
         }
-         
-        event.namedValues["PR5 min"]=[null];
-        event.namedValues["PR10 min"]=[null];
-        event.namedValues["PR15 min"]=[null];
-        event.namedValues["PR20 min"]=[null];
-        event.namedValues["PR30 min"]=[null];
-        event.namedValues["PR45 min"]=[null];
-        event.namedValues["PR60 min"]=[null];
-        event.namedValues["PR75 min"]=[null];
-        event.namedValues["PR90 min"]=[null];
+
         if(overview && overview.personal_records && overview.personal_records.length>0){
           var records=overview.personal_records.filter(function(val,idx,arr){return val.name=='Cycling'})[0].records;
           for(var i=0;i<records.length;++i){
@@ -92,7 +102,7 @@ function onFormSubmit(event){
   
   var formValues = event.namedValues;
   var html = '<hr>'+message+'<hr><ul>';
-  for (Key in formValues) {
+  for (var Key in formValues) {
     var key = Key;
     var data = formValues[Key];
     html += '<li>' + key + ": " + data + '</li>';
