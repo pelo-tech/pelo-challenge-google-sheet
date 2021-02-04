@@ -41,7 +41,17 @@ angular.module('pelotonApp', [])
        google.script.run.refreshFriends();
     };
     
-     
+    pelotonController.followUsers=function(){
+       if(window.confirm("Follow selected leaderboard names?")){
+         pelotonController.loading=true;
+          google.script.run.withSuccessHandler(function(result){ 
+          if(result){
+          pelotonController.loading=false;
+          }
+          }).followSelectedUsers();
+       }
+    };
+    
       
     pelotonController.incrementalPull=function(){
         if(!pelotonController.competition){ window.alert("Please select an event/week to load incrementally."); return;}
@@ -61,7 +71,7 @@ angular.module('pelotonApp', [])
   });
 </script>
 </head>
-  <body ng-init="peloton.displayResultsSheet()" ng-controller="PelotonUserController as peloton"  >
+  <body ng-controller="PelotonUserController as peloton"  >
 <div class="card" style="width: 18rem;">
    <div class="card-header">Find Users</div>
   <div class="card-body">
@@ -77,7 +87,8 @@ angular.module('pelotonApp', [])
               
       <br><br> <button  ng-click="peloton.refreshFriends()" class="badge badge-pill badge-secondary">Refresh Followers/Following list</button>
               
-              
+          <br><br> <button  ng-click="peloton.followUsers()" class="badge badge-pill badge-secondary">Follow Selected Leaderboard Names/IDs</button>
+         
       <br><br>
               <button  ng-disabled="peloton.loading" ng-click="peloton.incrementalPull()" class="badge badge-pill badge-secondary">Incrementally Pull Week/Event</button>
                 <label for="competitionSelect"> Race/Event (Required): </label>

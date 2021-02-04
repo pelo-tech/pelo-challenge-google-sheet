@@ -91,6 +91,84 @@ function displaySelectedUser(){
   displayUser(value);
  }
 
+function followSelectedUsers(){
+  var names={};
+  var wrongFormat=false
+  currentSelection=SpreadsheetApp.getSelection().getActiveRangeList().getRanges().map(
+    range=>{
+      if(wrongFormat) return;
+      values=range.getDisplayValues();
+      if(!values.length || values[0].length>1){
+            SpreadsheetApp.getUi().alert("No names selected. Please select a single set of cells (or one column) containing just leaderboard names or profile IDs"); 
+            wrongFormat=true;
+      }
+      values.map(row=>{names[row[0].toLowerCase()]='-'});
+    }
+  )
+  if(wrongFormat) return;
+  SpreadsheetApp.getUi().alert("About to load "+Object.keys(names).length+ " names :"+JSON.stringify(names));
+  var friends=getAllFriends();
+  friends.map(profile=>{
+    var username=profile.username.toLowerCase();
+    if(names[username]!=null) {
+        names[username]=profile.relationship;
+        console.log("Found profile "+username+" // "+ JSON.stringify(profile.relationship));
+    } 
+  });
+  var newNames=[];
+  var existingNames=[];
+  var privateNames=[];
+  Object.keys(names).map(name=>{
+    if(names[name].me_to_user && names[name].me_to_user =='following'){
+      existingNames.push(name);
+    }
+    else if(names[name].me_to_user && names[name].me_to_user =='follow_pending'){
+      privateNames.push(name);
+    }
+    else newNames.push(name);
+  });
+
+    SpreadsheetApp.getUi().alert(
+      "Already Following: "+existingNames.length+"-> "+JSON.stringify(existingNames)+
+      "\nPrivate/Pending Follow: "+existingNames.length+"-> "+JSON.stringify(privateNames)+
+    "\nProceed with "+newNames.length+" new names:" +JSON.stringify(newNames));
+    var results={};
+    newNames.map(name=>{
+      results[name]="Attempted";
+      try{
+        Logger.log("Looking up "+name);
+        var profile=getUserProfile(name);
+        try{
+          if(profile.follow_pending){
+            results[name]="Already Follow Pending";
+          } else {
+            var result=followUser(profile.user_id);
+            results[name]=result;
+          }
+        } catch (e){
+          Logger.log("Error following user "+name+"/"+profile.user_id);
+          Logger.log(e);
+          results[name]="Error";
+        }
+      } catch (e){
+        Logger.log("Error finding profile for user "+name);
+        Logger.log(e);
+        results[name]="Profile not found";
+
+      }
+    });
+    
+    var response={
+      privateNames:privateNames,
+      existingNames:existingNames,
+      newNames:newNames,
+      results:results
+    }
+    SpreadsheetApp.getUi().alert("Final response: "+JSON.stringify(results));
+    Logger.log("Final results: "+JSON.stringify(response));
+    return response;
+
+}
 function displaySelectedRide(){
   var resultValue=getSelectedValue(RESULTS_SHEET_NAME,"Ride ID");
   var ridesValue=getSelectedValue(RIDES_SHEET_NAME,"ID");
