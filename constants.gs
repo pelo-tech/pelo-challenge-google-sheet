@@ -13,6 +13,7 @@ var CONFIG_SHEET_NAME="Config";
 var FAVORITES_SHEET_NAME="Favorites";
 var INSTRUCTORS_SHEET_NAME="Instructors";
 var PARTICIPANTS_SHEET_NAME="Participants";
+var FRIENDS_SHEET_NAME="Friends"
 var RIDES_SHEET_NAME="Rides";
 var RESULTS_SHEET_NAME="Results";
 var EMAIL_TO_CELL="B9";

@@ -77,11 +77,12 @@ function displaySelectedUser(){
   
   var resultsValue=getSelectedValue(RESULTS_SHEET_NAME,"User ID");
   var registrationValue=getSelectedValue(REGISTRATION_SHEET_NAME,"UserID");
-  
+  var friendsValue=getSelectedValue(FRIENDS_SHEET_NAME,"UserID");
   // Default to the results sheet
   var value=resultsValue;
-  if(value==null || (activeSheet==REGISTRATION_SHEET_NAME && registrationValue!=null)) value=registrationValue;
-  
+  if(activeSheet==FRIENDS_SHEET_NAME && friendsValue!=null) value=friendsValue;
+  if(activeSheet==REGISTRATION_SHEET_NAME && registrationValue!=null) value=registrationValue;
+
   if(isBlank(value)){
     SpreadsheetApp.getUi().alert("No user row selected in results or registration sheet.");
     return;
