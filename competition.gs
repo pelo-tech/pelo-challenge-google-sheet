@@ -42,6 +42,26 @@ function incrementallyPullLatestCompetition(){
  incrementallyPullRidesForCompetition(competition);
 }
 
+function testClearResultsForCompetition(){
+  clearResultsForCompetition("Winter Week 3");
+}
+function clearResultsForCompetition(competition){
+  var event=eventStart("ClearRidesForCompetition", competition);
+  var resultsSheet=SpreadsheetApp.getActive().getSheetByName(RESULTS_SHEET_NAME);
+  var dataRange=resultsSheet.getDataRange();
+  var values=dataRange.getValues();
+  var competitionIndex=values[0].findIndex(name=>{return name=="Competition"});
+  var filteredValues=values.filter(row=>{
+    return row[competitionIndex]!=competition;
+  });
+  if(filteredValues.length!=values.length){
+    dataRange.clearContent();
+    var newRange = resultsSheet.getRange(1,1,filteredValues.length, filteredValues[0].length);
+    newRange.setValues(filteredValues);
+  }
+  eventEnd(event,"Deleted "+(values.length-filteredValues.length)+" workouts");
+
+}
 function incrementallyPullRidesForCompetition(competition){
 
   var result={competition:null, rides:0, workouts:0, error:null};
@@ -85,6 +105,17 @@ function incrementallyPullRidesForCompetition(competition){
 function testGetExistingWorkoutsForUserInCompetition(){
   var workouts=getExistingWorkoutsForUserInCompetition("b3f902e4b6c54777a73b61471ebed471", "RTW Week 1");
   Logger.log(JSON.stringify(workouts));
+}
+
+function getExistingWorkoutsForCompetition( competition){
+  var event=eventStart("GetWorkoutsForCompetition",competition);
+  var resultsSheet=SpreadsheetApp.getActive().getSheetByName(RESULTS_SHEET_NAME);
+  var workouts=getDataAsObjects(resultsSheet);
+  var results=workouts.filter(workout=>{
+    return workout["Competition"]==competition;
+  });
+  eventEnd(event, results.length);
+  return results;
 }
 
 function getExistingWorkoutsForUserInCompetition(userId, competition){

@@ -62,7 +62,7 @@ function getWorkoutsPage(url){
   Logger.log("Returning page "+ (page.page+1) +" out of "+page.page_count+" pages, containing "+page.limit+" records out of the total "+page.total);
   return page;
 }
-
+// TODO: Need to get a date range in here
 function getRecentFollowingWorkoutsForClass(ride_id, days_ago, latest_workout_id, page_size){
 var event=eventStart("Get Following Workouts",ride_id +", max "+days_ago+"d ago, lastID="+latest_workout_id+",PgSz="+page_size);
   var all_workouts={};
