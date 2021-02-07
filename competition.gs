@@ -3,11 +3,42 @@
   return getDataAsObjects(sheet);
 }
 
+/* Gets competition and validates boundaries to make sure 
+  the start is before the end, and the span is less than 60 days 
+  There is a Start and End but also a 'ValidFrom' and 'ValidUntil' 
+  which could expand cutoff periods.  This returns a CutoffStart 
+  and a CutoffEnd
+  */
+ function getCompetitionByName(name){
+  var competitions=getCompetitions();
+  var result=competitions.filter(c=>{return c.Name==name;});
+  if(!result.length) throw "Error - cannot find competition by name "+name;
+  var competition=  result[0];
+  var cutoff_start=competition.Start;
+  var cutoff_end=competition.End;
+  if(! cutoff_end ) {
+    cutoff_end=new Date();
+    Logger.log("No cutoff end date, so assuming now");
+  }
+  if(competition.ValidUntil) cutoff_end=competition.ValidUntil;
+  if(competition.ValidFrom) cutoff_start = competition.ValidFrom;
+  if(cutoff_start.getTime() >= cutoff_end.getTime()) throw "Error: Cutoff start must be BEFORE cutoff End";
+  if((cutoff_end.getTime() - cutoff_start.getTime()) > 1000*60*60*24*MAXIMUM_EVENT_SPAN) throw "Error: Event duration is too long. Maximum(days) is "+MAXIMUM_EVENT_SPAN;
+  competition.cutoff_start=cutoff_start;
+  competition.cutoff_end=cutoff_end;
+  return competition;
+}
+
+function testCompetitionByName(){
+  var c=getCompetitionByName("Winter Week 4");
+  Logger.log("Competition: "+JSON.stringify(c));
+}
+
 function testGetRidesForLatestCompetition(){
   var competitions=getActiveCompetitions();
   var competition=(competitions.length>0?competitions[0].Name:null);
   if(competition){
-   getRidesForCompetition(competitiom);
+   getRidesForCompetition(competition);
   }
 
 }
@@ -119,6 +150,18 @@ function getExistingWorkoutsForCompetition( competition){
   return results;
 }
 
+
+function getExistingWorkoutsForRideInCompetition( ride_id, competition){
+  var event=eventStart("GetWorkoutsForRideInCompetition",ride_id+","+competition);
+  var resultsSheet=SpreadsheetApp.getActive().getSheetByName(RESULTS_SHEET_NAME);
+  var workouts=getDataAsObjects(resultsSheet);
+  var results=workouts.filter(workout=>{
+    return workout["Competition"]==competition && workout["Ride ID"]==ride_id;
+  });
+  eventEnd(event, results.length);
+  return results;
+}
+
 function getExistingWorkoutsForUserInCompetition(userId, competition){
   var event=eventStart("GetWorkoutsForUserInCompetition",userId+","+competition);
   var resultsSheet=SpreadsheetApp.getActive().getSheetByName(RESULTS_SHEET_NAME);
@@ -143,15 +186,15 @@ function testGetWorkoutsForUserOnRides(){
   //Logger.log(result);
 }
 function getWorkoutsForUserOnRides(user_id,rides){
-  
   var peloton=getConfigDetails().peloton;
-  var limit=50;
+  var limit=200;
   var page=0;
-  var url=peloton.http_base +'/api/user/'+user_id+"/workouts?sort_by=-created&joins=user,ride,ride.instructor&limit="+limit+"&page="+page;
+  var url=peloton.http_base +'/api/user/'+user_id+"/workouts?sort_by=-created&joins=ride,ride.instructor&limit="+limit+"&page="+page;
   Logger.log(url);
   var result= getWorkoutsPage(url);
   if(result && result.workouts && result.workouts.length>0){
-    return result.workouts.filter(workout=> rides.indexOf(workout.ride.id)>-1);
+    var workouts= result.workouts.filter(workout=> rides.indexOf(workout.ride.id)>-1);
+    return workouts;
   }
   else {
     return [];

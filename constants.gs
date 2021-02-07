@@ -24,7 +24,8 @@ var LOG_SHEET_NAME="System Log";
 var REGISTRATION_SHEET_NAME="Registration";
 var COMPETITIONS_SHEET_NAME="Competitions";
 var VALID_USERNAME_REGEX=/[^A-Za-zÀ-ÖØ-öø-ÿ0-9_]/gi;
-
+// Maximum number of days a competition can span
+var MAXIMUM_EVENT_SPAN = 45;
 /*****
    Dynamic Table Join Settings
   

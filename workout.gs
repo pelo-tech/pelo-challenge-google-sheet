@@ -22,13 +22,18 @@ function getWorkoutsPage(url){
     show_next: result.show_next,
     show_previous: result.show_previous
   };
-  
+  var profiles={};
   result.data.map(workout => {
-  
+      
        // Get latest ride count for a user  to get info on impending milestone
         if(workout.status  && workout.status=="IN_PROGRESS"){
           Logger.log("Ignoring incomplete workout: "+workout.id +"//"+workout.user.username+"//"+workout.status);
           return;
+        }
+        // sometimes we have a list of user's workouts. Since we can't seem to join that, we can add it here and cache so we only load once
+        if(!workout.user){
+          if(!profiles[workout.user_id]) profiles[workout.user_id] = getUserProfile(workout.user_id);
+          workout.user=profiles[workout.user_id] ;
         }
         var rides=0;
         if(workout.user && workout.user.workout_counts){
@@ -62,14 +67,19 @@ function getWorkoutsPage(url){
   Logger.log("Returning page "+ (page.page+1) +" out of "+page.page_count+" pages, containing "+page.limit+" records out of the total "+page.total);
   return page;
 }
-// TODO: Need to get a date range in here
-function getRecentFollowingWorkoutsForClass(ride_id, days_ago, latest_workout_id, page_size){
-var event=eventStart("Get Following Workouts",ride_id +", max "+days_ago+"d ago, lastID="+latest_workout_id+",PgSz="+page_size);
+
+function getRecentFollowingWorkoutsForClassDaysBack(ride_id, days_ago, latest_workout_id){
+  var cutoff_start=new Date().getTime()-(days_ago * 24*60*60*1000);
+  var cutoff_end=new Date().getTime()+(60*60*1000); // 1 hour from now just to be safe
+  return getRecentFollowingWorkoutsForClass(ride_id, cutoff_start, cutoff_end, latest_workout_id);
+}
+
+function getRecentFollowingWorkoutsForClass(ride_id, cutoff_start, cutoff_end, latest_workout_id, page_size){
+var event=eventStart("Get Following Workouts",ride_id +", max "+new Date(cutoff_start)+" through "+new Date(cutoff_end)+", lastID="+latest_workout_id+",PgSz="+page_size);
   var all_workouts={};
   var done=false;
   var page=0;
   if(!page_size || page_size==0) page_size=200;
-  var cutoff=new Date().getTime()-(days_ago * 24*60*60*1000);
   while(!done){
     // Get Page of workouts
     var results=getRecentFollowingWorkouts(ride_id, page, page_size);
@@ -84,10 +94,12 @@ var event=eventStart("Get Following Workouts",ride_id +", max "+days_ago+"d ago,
           Logger.log("Found ID Cutoff workout ["+latest_workout_id+"] Ignoring this ["+workout.id+"/"+workout.username+"/"+workout.start_time+"] and earlier ones");
           done=true; 
           break;
-      } else if(workout.start_time.getTime()<cutoff) {
-          Logger.log("Found Time Cutoff workout earlier than ["+new Date(cutoff)+"] Ignoring this ["+workout.id+"/"+workout.username+"/"+workout.start_time+"] and earlier ones");
+      } else if(workout.start_time.getTime()<cutoff_start.getTime()) {
+          Logger.log("Found Time Cutoff workout earlier than ["+new Date(cutoff_start)+"] Ignoring this ["+workout.id+"/"+workout.username+"/"+workout.start_time+"] and earlier ones");
           done=true;
           break;
+      } else if (workout.start_time.getTime()>cutoff_end.getTime() ) { 
+          Logger.log("This workout took place after the end of the cutoff period.  Ignoring this ["+workout.id+"/"+workout.username+"/"+workout.start_time+"]"); 
       } else {
            var user=workout.user_id;
            if(!all_workouts[user] || all_workouts[user].start_time.getTime() < workout.start_time.getTime()){
@@ -114,10 +126,11 @@ var event=eventStart("Get Following Workouts",ride_id +", max "+days_ago+"d ago,
   return arr.sort((a,b)=>{ return a.start_time-b.start_time;});
 }
 
+
 function testFollowingWorkouts(){
     var ride_id="0f3c1aaa6b124b91a3691787f2d572ab";
 
-  var results=getRecentFollowingWorkoutsForClass(ride_id, 2);
+  var results=getRecentFollowingWorkoutsForClassDaysBack(ride_id, 2);
 
   Logger.log(results);
 
@@ -171,7 +184,7 @@ var id="ecdb59c419964cb1818558b4b820a110";
 var competition="RTW Week 1";
   var workoutID=getLatestSavedWorkoutIDForRide(id,competition);
   Logger.log("Workout found: "+workoutID);
-  var workouts=getRecentFollowingWorkoutsForClass(id, 14, workoutID);
+  var workouts=getRecentFollowingWorkoutsForClassDaysBack(id, 14, workoutID);
   Logger.log("Workouts After == "+workouts.length);
   if(workouts.length>0){
     Logger.log("First workout="+workouts[0].start_time);
@@ -217,6 +230,7 @@ function dedupeUsersWithMultipleRides(ride_id,competition){
   var event=eventStart("Dedupe Users", ride_id+","+competition);
   var sheet=SpreadsheetApp.getActiveSpreadsheet().getSheetByName(RESULTS_SHEET_NAME);
   var workouts=getDataAsObjects(sheet);
+  workouts=workouts.filter(workout=>{ return workout["Ride ID"]==ride_id || (competition!=null && workout["Competition"] ==competition)});
   var user_workouts={};
   var rows_to_delete=[];
   Logger.log("Deduping users for "+ride_id+"/"+competition+" out of the total sheet of "+workouts.length+" workouts");
@@ -278,7 +292,6 @@ function appendWorkoutRows(rows){
 }
 
 function loadAllWorkoutsForRide(ride_id, competition, last_workout_id, page_size){
- // TODO: Get Competition and get date boundaries. Use this instead of last X days....
  var config=getConfigDetails();
  var event=eventStart("Load All Workouts",ride_id +","+competition+",Last="+last_workout_id+", PageSize="+page_size);
 
@@ -289,7 +302,9 @@ function loadAllWorkoutsForRide(ride_id, competition, last_workout_id, page_size
     Logger.log("Last Workout ID specified. Will use this as a cutoff to load incremental results. Not purging");
     purge=false;
   }
-  var workouts=getRecentFollowingWorkoutsForClass(ride_id, days, last_workout_id, page_size);
+  var competitionDetails=getCompetitionByName(competition);
+  Logger.log("Loading competition with cutoff boundaries: " +JSON.stringify(competitionDetails));
+  var workouts=getRecentFollowingWorkoutsForClass(ride_id, competitionDetails.cutoff_start, competitionDetails.cutoff_end, last_workout_id, page_size);
   Logger.log("Got "+workouts.length+" workouts performed on "+ride.title+" by "+ride.instructor.name);
   if(purge){
     Logger.log("Purging any existing workouts on this ride (competition="+competition+")");
