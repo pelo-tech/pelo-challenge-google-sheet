@@ -180,8 +180,8 @@ var competition="RTW Week 1";
 }
 
 function testDedupeRides(){
-  var id="ecdb59c419964cb1818558b4b820a110";
-  var competition="RTW Week 1";
+  var id="99cb17ab637340b5a2731884a55ae889";
+  var competition="RTW Week 3";
   dedupeUsersWithMultipleRides(id,competition);
 }
 
@@ -278,6 +278,7 @@ function appendWorkoutRows(rows){
 }
 
 function loadAllWorkoutsForRide(ride_id, competition, last_workout_id, page_size){
+ // TODO: Get Competition and get date boundaries. Use this instead of last X days....
  var config=getConfigDetails();
  var event=eventStart("Load All Workouts",ride_id +","+competition+",Last="+last_workout_id+", PageSize="+page_size);
 

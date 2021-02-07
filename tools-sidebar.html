@@ -45,13 +45,29 @@ angular.module('pelotonApp', [])
        if(window.confirm("Follow selected leaderboard names?")){
          pelotonController.loading=true;
           google.script.run.withSuccessHandler(function(result){ 
-          if(result){
+          if(result!=null){
           pelotonController.loading=false;
           }
           }).followSelectedUsers();
        }
     };
     
+    pelotonController.clearResults=function(){
+        if(!pelotonController.competition){ window.alert("Please select an event/week to clear results for."); return;}
+        if(!window.confirm("Are you sure you want to wipe out results for this event/week? This will require a full load of that week (Incremental pull) to recover. ")) return;
+         pelotonController.loading=true;
+        var comp= pelotonController.competition;
+        google.script.run.withSuccessHandler(function(result){ 
+          if(result){
+          pelotonController.loading=false;
+          $scope.$digest();          
+          if(result)
+            alert("Cleared a total of "+JSON.stringify(result) +"workouts from from" + comp);
+          else alert("No results found to clear");
+        }
+      }).clearResultsForCompetition(pelotonController.competition);
+    };
+
       
     pelotonController.incrementalPull=function(){
         if(!pelotonController.competition){ window.alert("Please select an event/week to load incrementally."); return;}
@@ -89,7 +105,8 @@ angular.module('pelotonApp', [])
               
           <br><br> <button  ng-click="peloton.followUsers()" class="badge badge-pill badge-secondary">Follow Selected Leaderboard Names/IDs</button>
          
-      <br><br>
+       <br><br>
+              <button  ng-disabled="peloton.loading" ng-click="peloton.clearResults()" class="badge badge-pill badge-danger">Delete All Workouts for Week/Event</button> <br><br>
               <button  ng-disabled="peloton.loading" ng-click="peloton.incrementalPull()" class="badge badge-pill badge-secondary">Incrementally Pull Week/Event</button>
                 <label for="competitionSelect"> Race/Event (Required): </label>
               <select name="competitionSelect" id="competitionSelect" ng-model="peloton.competition">

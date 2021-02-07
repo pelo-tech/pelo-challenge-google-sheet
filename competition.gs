@@ -60,6 +60,7 @@ function clearResultsForCompetition(competition){
     newRange.setValues(filteredValues);
   }
   eventEnd(event,"Deleted "+(values.length-filteredValues.length)+" workouts");
+  return (values.length-filteredValues.length);
 
 }
 function incrementallyPullRidesForCompetition(competition){
