@@ -233,7 +233,7 @@ function refreshUserForCompetition(userId, competition , prompt){
   });
   Logger.log("Deduped a total of "+dupes+" duplicates after inserting a total of "+rows.length+" rows for a net total of ");
   
-  eventEnd("Inserted: "+rows.length+", Dupes: "+dupes);
+  eventEnd(event, "Inserted: "+rows.length+", Dupes: "+dupes);
   if(prompt){
     SpreadsheetApp.getUi().alert("Refreshed user "+userId+ " for event "+competition+" Inserted "+rows.length+" rows, of which "+dupes+" were duplicates");
   }
