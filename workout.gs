@@ -321,7 +321,9 @@ function loadAllWorkoutsForRide(ride_id, competition, last_workout_id, page_size
   }
   
    storeRide(ride, competition, workouts?workouts.length:0);
-   dedupeUsersWithMultipleRides(ride_id,competition);
+  if(workouts && workouts.length){
+    dedupeUsersWithMultipleRides(ride_id,competition);
+   }
    eventEnd(event,workouts&& workouts.length?workouts.length : 0);
    return workouts;
 }
