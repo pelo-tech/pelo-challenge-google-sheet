@@ -27,6 +27,13 @@ angular.module('pelotonApp', [])
        google.script.run.refreshUserForCompetition(user_id, userController.competition, true);
        }
      }
+
+      userController.refreshUserForAll=function(user_id){
+     if(confirm("Refresh user for all competitions/events? This may take a while!")){
+       google.script.run.refreshUserForAllCompetitions(user_id, false);
+       alert("This is now running. You can close this window");
+       }
+     };
      
        userController.followUser=function(user_id){
     var myUserId=user_id;
@@ -70,6 +77,8 @@ angular.module('pelotonApp', [])
       <option ng-repeat="comp in peloton.competitions |orderBy:'comp.Start.getTime()':reverse" value="{{comp.Name}}">{{comp.Name}}</option>
     </select>
              <button ng-if="peloton.competition!=null" ng-click="peloton.refreshUserForRide(peloton.profile.user_id)" class="badge badge-pill badge-secondary">Refresh User for Event</button>
+
+                  <button   ng-click="peloton.refreshUserForAll(peloton.profile.user_id)" class="badge badge-pill badge-danger">Refresh User for ALL EVENTS</button>
 
 
 </div>

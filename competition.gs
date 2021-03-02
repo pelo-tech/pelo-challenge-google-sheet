@@ -200,6 +200,16 @@ function getWorkoutsForUserOnRides(user_id,rides){
     return [];
   }
 }
+
+function refreshUserForAllCompetitions(userId, prompt){
+  var event=eventStart("RefreshUser for all competitions",userId+", prompt="+prompt);
+  var competitions=getCompetitions();
+  var total=0;
+  competitions.forEach(c=>{
+    total+=refreshUserForCompetition(userId, c.Name, prompt);
+  });
+  eventEnd(event, "Total rides loaded for "+competitons.length+" competitions: "+total);
+}
 function refreshUserForCompetition(userId, competition , prompt){
   if(!competition) return;
   if(prompt){
