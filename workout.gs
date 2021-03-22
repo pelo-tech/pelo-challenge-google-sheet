@@ -52,7 +52,7 @@ function getWorkoutsPage(url){
                   timezone: workout.timezone,
                   platform: workout.platform,
                   username: workout.user.username,
-                  user_id: workout.user.id,
+                  user_id: workout.user.id || workout.user.user_id,
                   user_image: workout.user.image_url,
                   user_location: workout.user.location,
                   user_private: workout.user.is_profile_private,
