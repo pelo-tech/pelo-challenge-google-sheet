@@ -46,7 +46,31 @@ function testGetFollowers(){
     getFollowers("36fb3771921a45e694057faf629288cd", 200);
 }
 
+/* This is designed to be run manually to trim how many users 
+we're getting data for, between competitions so we can look for just participant data 
+NOTE that running this will cause previous competition data to be difficult to re-retrieve since we unsubscribe from the other users' data. A better solution might be to pull the data but ignore it, rather than unfollow the users */
+function trimFollowersNotInSubgroups(){
+  var dataRange="SubGroups!B2:B9999";
+  var rows=SpreadsheetApp.getActive().getRange(dataRange).getValues();
+  var names={};
+  rows.map(name=>{ var n=name[0].toLowerCase().trim(); names[n]=n;});
+  Logger.log("Rows:" + rows.length);
+  Logger.log("NAMES: "+Object.keys(names).length);
+  var peloton=getConfigDetails().peloton;
+  var following=getFollowing(peloton.user_id,200);
+  var deleted=[];
+  following.map(profile=>{  
+    var n=profile.username.toLowerCase().trim();
+     if (!names[n]) {
+     //  Logger.log("No need to follow:"+n);
+       deleted.push(profile.id);
+     }
+  });
+  Logger.log("DELETE: "+deleted.length); 
+  Logger.log(JSON.stringify(deleted));
+  deleted.map(unfollowUser);
 
+}
 function getFriends(user_id, relationship, page_size){
 var event=eventStart("Get "+relationship.toUpperCase()+" for user",user_id +", PgSz="+page_size);
   var profiles=[];
