@@ -185,6 +185,30 @@ function testGetWorkoutsForUserOnRides(){
   });
   //Logger.log(result);
 }
+
+function getLastWorkoutsForUser(user_id, limit){
+  var peloton=getConfigDetails().peloton;
+  var page=0;
+  var url=peloton.http_base +'/api/user/'+user_id+"/workouts?sort_by=-created&joins=ride,ride.instructor&limit="+limit+"&page="+page;
+  Logger.log(url);
+  var result= getWorkoutsPage(url);
+  if(result && result.workouts && result.workouts.length>0){
+    return result.workouts;
+  }
+  else {
+    return [];
+  }
+}
+
+function filterWorkoutsForRides(workouts,rides){
+  if(workouts && workouts.length>0){
+    return workouts.filter(workout=> rides.indexOf(workout.ride.id)>-1);
+  }
+  else {
+    return [];
+  }
+}
+
 function getWorkoutsForUserOnRides(user_id,rides){
   var peloton=getConfigDetails().peloton;
   var limit=200;
@@ -202,16 +226,26 @@ function getWorkoutsForUserOnRides(user_id,rides){
 }
 
 function refreshUserForAllCompetitions(userId, prompt){
+  if(prompt)  SpreadsheetApp.getUi().alert("Loading all data for user "+userId+" for all events");
   var event=eventStart("RefreshUser for all competitions",userId+", prompt="+prompt);
   var competitions=getCompetitions();
+  var allWorkouts=getLastWorkoutsForUser(userId, 200);
   var total=0;
   competitions.forEach(c=>{
-    total+=refreshUserForCompetition(userId, c.Name, prompt);
+    total+=refreshUserForCompetition(userId, c.Name,  false, allWorkouts);
   });
-  eventEnd(event, "Total rides loaded for "+competitons.length+" competitions: "+total);
+    eventEnd(event, "Total rides loaded for "+competitions.length+" competitions: "+total);
+
+  if(prompt){
+    SpreadsheetApp.getUi().alert("Refreshed user for all events.  Loaded "+total+" workouts out of most recent "+allWorkouts.length +" that were analyzed");
+  }
 }
-function refreshUserForCompetition(userId, competition , prompt){
+function refreshUserForCompetition(userId, competition , prompt, allWorkouts){
   if(!competition) return;
+  if(!allWorkouts){
+    Logger.log("Did not supply user workout list. Loading that now");
+    allWorkouts=getLastWorkoutsForUser(userId, 200);
+  }
   if(prompt){
     SpreadsheetApp.getUi().alert("Refreshing user "+userId+ " for event "+competition);
   }
@@ -224,10 +258,8 @@ function refreshUserForCompetition(userId, competition , prompt){
   rides.forEach(ride=>{rideSet.push(ride.ID);});
   result.rides=rides.length;
   
-  
-  
   // Get user workouts for each ride, and if scope append them to the workout set
-  var workouts=getWorkoutsForUserOnRides(userId, rideSet);
+  var workouts=filterWorkoutsForRides(allWorkouts, rideSet); 
   Logger.log("Found a total of "+workouts.length +" workouts for user "+userId +" in "+rideSet.length+" rides in "+competition);
   
   var rows=getWorkoutDetailRows(workouts, competition);

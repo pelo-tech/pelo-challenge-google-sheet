@@ -44,6 +44,7 @@ function showSidebarRides() {
 
 function getResultHeaders(sheet){
   var results=SpreadsheetApp.getActive().getSheetByName(sheet);
+  if(!results) return [];
   var headers=results.getRange("A1:AZ1").getValues()[0];
   return headers;
   }
@@ -78,13 +79,19 @@ function displaySelectedUser(){
   var resultsValue=getSelectedValue(RESULTS_SHEET_NAME,"User ID");
   var registrationValue=getSelectedValue(REGISTRATION_SHEET_NAME,"UserID");
   var friendsValue=getSelectedValue(FRIENDS_SHEET_NAME,"UserID");
+  var subgroupsValue=getSelectedValue(SUBGROUPS_SHEET_NAME,"Leaderboard name");
+
   // Default to the results sheet
   var value=resultsValue;
   if(activeSheet==FRIENDS_SHEET_NAME && friendsValue!=null) value=friendsValue;
   if(activeSheet==REGISTRATION_SHEET_NAME && registrationValue!=null) value=registrationValue;
-
+  if(activeSheet==SUBGROUPS_SHEET_NAME && subgroupsValue!=null) {
+    var profile=getUserProfile(subgroupsValue);
+    if(profile) value=profile.user_id;
+  }
+  
   if(isBlank(value)){
-    SpreadsheetApp.getUi().alert("No user row selected in results or registration sheet.");
+    SpreadsheetApp.getUi().alert("No user row selected in results, registration, friends or subgroups sheet.");
     return;
   }
   

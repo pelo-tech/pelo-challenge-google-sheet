@@ -30,8 +30,7 @@ angular.module('pelotonApp', [])
 
       userController.refreshUserForAll=function(user_id){
      if(confirm("Refresh user for all competitions/events? This may take a while!")){
-       google.script.run.refreshUserForAllCompetitions(user_id, false);
-       alert("This is now running. You can close this window");
+       google.script.run.refreshUserForAllCompetitions(user_id, true);
        }
      };
      
