@@ -74,8 +74,10 @@ function getRecentFollowingWorkoutsForClassDaysBack(ride_id, days_ago, latest_wo
   return getRecentFollowingWorkoutsForClass(ride_id, cutoff_start, cutoff_end, latest_workout_id);
 }
 
-function getRecentFollowingWorkoutsForClass(ride_id, cutoff_start, cutoff_end, latest_workout_id, page_size){
-var event=eventStart("Get Following Workouts",ride_id +", max "+new Date(cutoff_start)+" through "+new Date(cutoff_end)+", lastID="+latest_workout_id+",PgSz="+page_size);
+function getRecentFollowingWorkoutsForClass(ride_id, c_start, c_end, latest_workout_id, page_size){
+  var cutoff_start=new Date(c_start);
+  var cutoff_end=new Date(c_end);
+var event=eventStart("Get Following Workouts",ride_id +", max "+cutoff_start+" through "+cutoff_end+", lastID="+latest_workout_id+",PgSz="+page_size);
   var all_workouts={};
   var done=false;
   var page=0;
@@ -94,8 +96,8 @@ var event=eventStart("Get Following Workouts",ride_id +", max "+new Date(cutoff_
           Logger.log("Found ID Cutoff workout ["+latest_workout_id+"] Ignoring this ["+workout.id+"/"+workout.username+"/"+workout.start_time+"] and earlier ones");
           done=true; 
           break;
-      } else if(workout.start_time.getTime()<cutoff_start.getTime()) {
-          Logger.log("Found Time Cutoff workout earlier than ["+new Date(cutoff_start)+"] Ignoring this ["+workout.id+"/"+workout.username+"/"+workout.start_time+"] and earlier ones");
+      } else if(workout.start_time.getTime()< cutoff_start.getTime()) {
+          Logger.log("Found Time Cutoff workout earlier than ["+cutoff_start+"] Ignoring this ["+workout.id+"/"+workout.username+"/"+workout.start_time+"] and earlier ones");
           done=true;
           break;
       } else if (workout.start_time.getTime()>cutoff_end.getTime() ) { 
@@ -128,9 +130,9 @@ var event=eventStart("Get Following Workouts",ride_id +", max "+new Date(cutoff_
 
 
 function testFollowingWorkouts(){
-    var ride_id="0f3c1aaa6b124b91a3691787f2d572ab";
+    var ride_id="82784a36a6ba41c7bbadcd1a01f6f044";
 
-  var results=getRecentFollowingWorkoutsForClassDaysBack(ride_id, 2);
+  var results=getRecentFollowingWorkoutsForClassDaysBack(ride_id, 200);
 
   Logger.log(results);
 
@@ -138,6 +140,15 @@ function testFollowingWorkouts(){
   
 }
 
+function testLoadRaceResults(){
+  var competitionDetails=getCompetitionByName("Winter Week 1");
+  var ride_id="82784a36a6ba41c7bbadcd1a01f6f044";
+  Logger.log("Loading competition with cutoff boundaries: " +JSON.stringify(competitionDetails));
+  var workouts=getRecentFollowingWorkoutsForClass(ride_id, competitionDetails.cutoff_start, competitionDetails.cutoff_end, null, 150);
+  for(var i=0;i<workouts.length;++i){
+    Logger.log("XXXXX>>>>> " +workouts[i].username);
+  }
+}
 function testLoadAllWorkoutsForRide(){
   loadAllWorkoutsForRide("2dbea3318ed6468caad5c9726005e08f");
 }
@@ -311,7 +322,6 @@ function loadAllWorkoutsForRide(ride_id, competition, last_workout_id, page_size
     purgeWorkouts(ride.id, competition);
   }
 
-  
   // we will sometimes join the workouts and rides, but here we wont since its always the same ride
   if(workouts) workouts.forEach(workout=>{workout.ride=ride});
   var rows=getWorkoutDetailRows(workouts, competition);
@@ -398,7 +408,7 @@ function getWorkoutDetailRows(workouts, competition){
 
 }
 function testGetFullWorkoutData(){
- var data=getFullWorkoutData('604cb344c20f46529c78e0e47a8be0fe');
+ var data=getFullWorkoutData('44c0e46603124981a7c2cabca4df4d4b');
  Logger.log(JSON.stringify(data));
  }
 
@@ -468,5 +478,7 @@ function loadWorkoutPerformanceGraph(workout_id){
   var result = JSON.parse(json);
   return result;
 }
+
+
 
 

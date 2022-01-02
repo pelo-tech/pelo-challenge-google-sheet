@@ -1,4 +1,6 @@
-
+function testGetUserProfile(){
+  getUserProfile('DovOps');
+}
 function getUserProfile(username) {
   if(!username || username.length==0) return null;
   var event=eventStart("Get User Profile",username);
