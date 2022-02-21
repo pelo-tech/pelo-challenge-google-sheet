@@ -29,6 +29,16 @@
   return competition;
 }
 
+function incrementallyPullRidesForAllCurrentCompetitions(){
+    var event=eventStart("Incrementally pulling any current competitions");
+    var competitions=getActiveCompetitions();
+    Logger.log("INCR:CURRENT: Found "+competitions.length +" active competitions: "+JSON.stringify(competitions));
+    for(var i=0;i<competitions.length;++i){
+      incrementallyPullRidesForCompetition(competitions[i].Name);
+    }
+    eventEnd(event,"Pulled rides for "+competitions.length+" competitions that were active");
+}
+
 function testCompetitionByName(){
   var c=getCompetitionByName("Winter Week 4");
   Logger.log("Competition: "+JSON.stringify(c));
@@ -46,8 +56,9 @@ function testGetRidesForLatestCompetition(){
 function getActiveCompetitions(){
  var now=new Date().getTime();
   var competitions=getCompetitions()
-    .filter(c=>{ return now>=c.Start.getTime() &&now < c.End.getTime()})
+    .filter(c=>{ return now>=c.ValidFrom.getTime() &&now < c.ValidUntil.getTime()})
     .sort((a,b)=>{return a.Start.getTime()-b.Start.getTime();});
+  Logger.log("Active Competitions-->"+JSON.stringify(competitions));
   return competitions;
 }
 
@@ -200,9 +211,13 @@ function getLastWorkoutsForUser(user_id, limit){
   }
 }
 
-function filterWorkoutsForRides(workouts,rides){
+function filterWorkoutsForRides(workouts,rides,competition){
   if(workouts && workouts.length>0){
-    return workouts.filter(workout=> rides.indexOf(workout.ride.id)>-1);
+    return workouts.filter(workout=> {
+      rides.indexOf(workout.ride.id)>-1
+      //&& workout.end_time.getTime() >= competition.cutoff_start.getTime()
+      //&& workout.end_time.getTime() <= competition.cutoff_end.getTime()
+    });
   }
   else {
     return [];
@@ -249,6 +264,7 @@ function refreshUserForCompetition(userId, competition , prompt, allWorkouts){
   if(prompt){
     SpreadsheetApp.getUi().alert("Refreshing user "+userId+ " for event "+competition);
   }
+  var competitionObject=(competition.Name)?competition:getCompetitionByName(competition);
   var result={competition:competition, rides: 0, workouts:0, purged:0};
   var event=eventStart("refreshUserForCompetition",userId+", "+competition);
   
@@ -259,7 +275,7 @@ function refreshUserForCompetition(userId, competition , prompt, allWorkouts){
   result.rides=rides.length;
   
   // Get user workouts for each ride, and if scope append them to the workout set
-  var workouts=filterWorkoutsForRides(allWorkouts, rideSet); 
+  var workouts=filterWorkoutsForRides(allWorkouts, rideSet, competitionObject); 
   Logger.log("Found a total of "+workouts.length +" workouts for user "+userId +" in "+rideSet.length+" rides in "+competition);
   
   var rows=getWorkoutDetailRows(workouts, competition);
